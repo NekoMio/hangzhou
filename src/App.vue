@@ -52,12 +52,7 @@ export default {
             child.receiveShadow = true;
           }
         });
-        // for (let i = 0; i < object.children.length; i++) {
-        //   // if (object.children[i].name === "mixamorigHips") {
-        //   console.log(object.children[i]);
-        //   // }
-        // }
-        let root = scene.getObjectByProperty("type", "Bone");
+        // let root = scene.getObjectByProperty("type", "Bone");
         console.log(object);
         let init_forward = TriangleNormal(
           GetBoneTransform(7).position,
@@ -69,82 +64,19 @@ export default {
           init_forward,
           new THREE.Vector3(0, 1, 0)
         ).invert();
-        // init_inv[0] = new THREE.Quaternion()
-        // init_inv[0].setFromUnitVectors(new THREE.Vector3(0, 0, 1), init_forward).invert()
-        // console.log(init_inv[0]);
-        // init_rot[0] = new THREE.Quaternion();
-        // GetBoneTransform(0).getWorldQuaternion(init_rot[0]);
-        // init_rot[0] = GetBoneTransform(0).quaternion.clone()
-        // init_position = GetBoneTransform(0).position.clone()
         init_position = new THREE.Vector3();
         GetBoneTransform(0).getWorldPosition(init_position);
-        // for (let i = 0; i < bones.length; i++) {
-        //   let b = bones[i];
-        //   let c = child_bones[i];
-        //   //   init_rot[b] = new THREE.Quaternion();
-        //   //   GetBoneTransform(b).getWorldQuaternion(init_rot[b]);
-        //   //   // init_rot[b] = GetBoneTransform(b).quaternion.clone()
-        //   init_inv[b] = LookRotation(
-        //     GetBoneTransform(b)
-        //       .position.clone()
-        //       .sub(GetBoneTransform(c).position),
-        //     init_forward
-        //   ).invert();
-        //   //   console.log(init_rot[b], init_inv[b]);
-        //   //   // init_inv[b] = new THREE.Quaternion()
-        //   //   // init_inv[b].setFromUnitVectors(init_forward, GetBoneTransform(b).position.clone().sub(GetBoneTransform(c).position.clone())).invert()
-        // }
 
         // Test Update
 
-        // let now_pos = [];
-        // for (let i = 0; i < data[0].length; i++) {
-        //   now_pos[i] = new THREE.Vector3(data[0][i], data[2][i], -data[1][i]);
-        //   // console.log(now_pos[i])
-        // }
-        // // console.log(now_pos)
-        // let pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
-        // console.log(pos_forward);
-        // GetBoneTransform(0).position.copy(now_pos[0].clone().multiplyScalar(scale_ratio).add(new THREE.Vector3(init_position.x, init_position.y, init_position.z)))
-        // // console.log(THREE.Quaternion.setFromUnitVectors(pos_forward, new THREE.Vector3(0, 0, 1)))
-        // // let tmp_rotation = (new THREE.Quaternion()).setFromUnitVectors(pos_forward, new THREE.Vector3(0, 0, 1)).multiply(init_rot[0])
-        // let tmp_rotation = LookRotation(pos_forward, new THREE.Vector3(0, 1, 0)).multiply(init_rot[0])
-        // // tmp_rotation.setFromUnitVectors(pos_forward, new THREE.Vector3(0, 0, 1)).multiply(init_inv[0].clone())
-        // // console.log(tmp_rotation)
-        // GetBoneTransform(0).setRotationFromQuaternion(tmp_rotation)
+        let now_pos = [];
+        for (let i = 0; i < data[0].length; i++) {
+          now_pos[i] = new THREE.Vector3(data[0][i], data[2][i], -data[1][i]);
+        }
+        let pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
+        console.log(pos_forward);
 
-        // for (let i = 0; i < bones.length; i++) {
-        //   let b = bones[i]
-        //   let cb = child_bones[i]
-        //   // console.log(now_pos[b], now_pos[cb])
-        //   // console.log(now_pos[b].clone().sub(now_pos[cb]))
-        //   console.log(LookRotation(now_pos[b].clone().sub(now_pos[cb]).normalize(), pos_forward).multiply(init_inv[b]).multiply(init_rot[b]))
-        //   // let tmp_rotation = (new THREE.Quaternion()).setFromUnitVectors(now_pos[b].clone().sub(now_pos[cb]).normalize(), pos_forward).multiply(init_inv[b])
-        //   // GetBoneTransform(b).setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(pos_forward, now_pos[b].clone().sub(now_pos[cb]).normalize()).multiply(init_inv[b]).multiply(init_rot[b]))
-        //   GetBoneTransform(b).setRotationFromQuaternion(LookRotation(now_pos[b].clone().sub(now_pos[cb]).normalize(), pos_forward).multiply(init_inv[b]).multiply(init_rot[b]))
-        //   // GetBoneTransform(b).setRotationFromQuaternion(LookRotation(now_pos[b].clone().sub(now_pos[cb]).normalize(), pos_forward))
-        // }
-
-        // console.log(root)
-        // let boneNames = []
-        // let DFSname = (root) => {
-        //   if (root.children.length > 0) {
-        //     for (let i = 0; i < root.children.length; i++) {
-        //       if (root.children[i].type === "Bone" && root.children[i].ID !== root.ID) {
-        //         boneNames.push(root.children[i].name)
-        //         DFSname(root.children[i])
-        //       }
-        //     }
-        //   }
-        // }
-        // DFSname(root)
-        // console.log(boneNames)
       });
-      // let LookRotation = (forward, up) => { // right = x, forward = z, up = y
-      //   let first_rot = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), forward)
-      //   let second_rot = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), new THREE.Vector3().crossVectors(up, forward).normalize())
-      //   return first_rot.multiply(second_rot)
-      // }
       let LookRotation = (forward, up) => {
         // forward.Normalize();
 
