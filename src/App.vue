@@ -8,43 +8,123 @@
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import data from "./assets/3d_data0.json";
+let bones = [1, 2, 4, 5, 7, 8, 11, 12, 14, 15]; // 親ボーン
+let child_bones = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16];
+let init_inv = new Array();
+let init_rot = new Array();
+let scale_ratio = 0.003;
+let heal_position = 0.0;
+let init_position;
+let scene = null;
+
 export default {
   mounted() {
     this.initThree();
   },
   methods: {
     initThree() {
-      const scene = new THREE.Scene();
+      scene = new THREE.Scene();
       scene.background = new THREE.Color("#eee");
       const canvas = document.querySelector("#three");
       const loader = new FBXLoader();
       const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+      const axes = new THREE.AxesHelper();
       const camera = new THREE.PerspectiveCamera(
-        50,
+        60,
         window.innerWidth / window.innerHeight,
-        0.1,
+        0.3,
         1000
       );
       const controls = new OrbitControls(camera, renderer.domElement);
-      camera.position.z = 10;
-      
+      camera.position.set(0, 0, 2);
+      // camera.rotation.set(0, 0, 0)
+      camera.up.set(0, 1, 0);
+      scene.add(axes);
       loader.load("/model/xbot.fbx", (object) => {
-        scene.add(object);
-        object.scale.set(0.03, 0.03, 0.03);
-        object.position.set(0, -3, 0);
+        object.scale.set(0.01, 0.01, 0.01);
+        object.position.set(0, 0, 0);
         object.rotation.set(0, 0, 0);
+        scene.add(object);
         object.traverse((child) => {
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
           }
-        })
+        });
         // for (let i = 0; i < object.children.length; i++) {
         //   // if (object.children[i].name === "mixamorigHips") {
         //   console.log(object.children[i]);
         //   // }
         // }
-        let root = scene.getObjectByProperty("type", "Bone")
+        let root = scene.getObjectByProperty("type", "Bone");
+        console.log(object);
+        let init_forward = TriangleNormal(
+          GetBoneTransform(7).position,
+          GetBoneTransform(4).position,
+          GetBoneTransform(1).position
+        );
+        console.log(init_forward);
+        init_inv[0] = LookRotation(
+          init_forward,
+          new THREE.Vector3(0, 1, 0)
+        ).invert();
+        // init_inv[0] = new THREE.Quaternion()
+        // init_inv[0].setFromUnitVectors(new THREE.Vector3(0, 0, 1), init_forward).invert()
+        // console.log(init_inv[0]);
+        // init_rot[0] = new THREE.Quaternion();
+        // GetBoneTransform(0).getWorldQuaternion(init_rot[0]);
+        // init_rot[0] = GetBoneTransform(0).quaternion.clone()
+        // init_position = GetBoneTransform(0).position.clone()
+        init_position = new THREE.Vector3();
+        GetBoneTransform(0).getWorldPosition(init_position);
+        // for (let i = 0; i < bones.length; i++) {
+        //   let b = bones[i];
+        //   let c = child_bones[i];
+        //   //   init_rot[b] = new THREE.Quaternion();
+        //   //   GetBoneTransform(b).getWorldQuaternion(init_rot[b]);
+        //   //   // init_rot[b] = GetBoneTransform(b).quaternion.clone()
+        //   init_inv[b] = LookRotation(
+        //     GetBoneTransform(b)
+        //       .position.clone()
+        //       .sub(GetBoneTransform(c).position),
+        //     init_forward
+        //   ).invert();
+        //   //   console.log(init_rot[b], init_inv[b]);
+        //   //   // init_inv[b] = new THREE.Quaternion()
+        //   //   // init_inv[b].setFromUnitVectors(init_forward, GetBoneTransform(b).position.clone().sub(GetBoneTransform(c).position.clone())).invert()
+        // }
+
+        // Test Update
+
+        // let now_pos = [];
+        // for (let i = 0; i < data[0].length; i++) {
+        //   now_pos[i] = new THREE.Vector3(data[0][i], data[2][i], -data[1][i]);
+        //   // console.log(now_pos[i])
+        // }
+        // // console.log(now_pos)
+        // let pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
+        // console.log(pos_forward);
+        // GetBoneTransform(0).position.copy(now_pos[0].clone().multiplyScalar(scale_ratio).add(new THREE.Vector3(init_position.x, init_position.y, init_position.z)))
+        // // console.log(THREE.Quaternion.setFromUnitVectors(pos_forward, new THREE.Vector3(0, 0, 1)))
+        // // let tmp_rotation = (new THREE.Quaternion()).setFromUnitVectors(pos_forward, new THREE.Vector3(0, 0, 1)).multiply(init_rot[0])
+        // let tmp_rotation = LookRotation(pos_forward, new THREE.Vector3(0, 1, 0)).multiply(init_rot[0])
+        // // tmp_rotation.setFromUnitVectors(pos_forward, new THREE.Vector3(0, 0, 1)).multiply(init_inv[0].clone())
+        // // console.log(tmp_rotation)
+        // GetBoneTransform(0).setRotationFromQuaternion(tmp_rotation)
+
+        // for (let i = 0; i < bones.length; i++) {
+        //   let b = bones[i]
+        //   let cb = child_bones[i]
+        //   // console.log(now_pos[b], now_pos[cb])
+        //   // console.log(now_pos[b].clone().sub(now_pos[cb]))
+        //   console.log(LookRotation(now_pos[b].clone().sub(now_pos[cb]).normalize(), pos_forward).multiply(init_inv[b]).multiply(init_rot[b]))
+        //   // let tmp_rotation = (new THREE.Quaternion()).setFromUnitVectors(now_pos[b].clone().sub(now_pos[cb]).normalize(), pos_forward).multiply(init_inv[b])
+        //   // GetBoneTransform(b).setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(pos_forward, now_pos[b].clone().sub(now_pos[cb]).normalize()).multiply(init_inv[b]).multiply(init_rot[b]))
+        //   GetBoneTransform(b).setRotationFromQuaternion(LookRotation(now_pos[b].clone().sub(now_pos[cb]).normalize(), pos_forward).multiply(init_inv[b]).multiply(init_rot[b]))
+        //   // GetBoneTransform(b).setRotationFromQuaternion(LookRotation(now_pos[b].clone().sub(now_pos[cb]).normalize(), pos_forward))
+        // }
+
         // console.log(root)
         // let boneNames = []
         // let DFSname = (root) => {
@@ -60,46 +140,126 @@ export default {
         // DFSname(root)
         // console.log(boneNames)
       });
+      // let LookRotation = (forward, up) => { // right = x, forward = z, up = y
+      //   let first_rot = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), forward)
+      //   let second_rot = new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(1, 0, 0), new THREE.Vector3().crossVectors(up, forward).normalize())
+      //   return first_rot.multiply(second_rot)
+      // }
+      let LookRotation = (forward, up) => {
+        // forward.Normalize();
+
+        var vector = forward.clone().normalize();
+        var vector2 = new THREE.Vector3().crossVectors(up, vector).normalize();
+        var vector3 = new THREE.Vector3()
+          .crossVectors(vector, vector2)
+          .normalize();
+        // Vector3 vector2 = Vector3.Normalize(Vector3.Cross(up, vector));
+        // Vector3 vector3 = Vector3.Cross(vector, vector2);
+        var m00 = vector2.x;
+        var m01 = vector2.y;
+        var m02 = vector2.z;
+        var m10 = vector3.x;
+        var m11 = vector3.y;
+        var m12 = vector3.z;
+        var m20 = vector.x;
+        var m21 = vector.y;
+        var m22 = vector.z;
+
+        var num8 = m00 + m11 + m22;
+        var quaternion = new THREE.Quaternion();
+        if (num8 > 0) {
+          var num = Math.sqrt(num8 + 1);
+          quaternion.w = num * 0.5;
+          num = 0.5 / num;
+          quaternion.x = (m12 - m21) * num;
+          quaternion.y = (m20 - m02) * num;
+          quaternion.z = (m01 - m10) * num;
+          return quaternion;
+        }
+        if (m00 >= m11 && m00 >= m22) {
+          var num7 = Math.sqrt(1 + m00 - m11 - m22);
+          var num4 = 0.5 / num7;
+          quaternion.x = 0.5 * num7;
+          quaternion.y = (m01 + m10) * num4;
+          quaternion.z = (m02 + m20) * num4;
+          quaternion.w = (m12 - m21) * num4;
+          return quaternion;
+        }
+        if (m11 > m22) {
+          var num6 = Math.sqrt(1 + m11 - m00 - m22);
+          var num3 = 0.5 / num6;
+          quaternion.x = (m10 + m01) * num3;
+          quaternion.y = 0.5 * num6;
+          quaternion.z = (m21 + m12) * num3;
+          quaternion.w = (m20 - m02) * num3;
+          return quaternion;
+        }
+        var num5 = Math.sqrt(1 + m22 - m00 - m11);
+        var num2 = 0.5 / num5;
+        quaternion.x = (m20 + m02) * num2;
+        quaternion.y = (m21 + m12) * num2;
+        quaternion.z = 0.5 * num5;
+        quaternion.w = (m01 - m10) * num2;
+        return quaternion;
+      };
+      let TriangleNormal = (a, b, c) => {
+        console.log(a, b, c);
+        let d1 = new THREE.Vector3().subVectors(a, b);
+        let d2 = new THREE.Vector3().subVectors(a, c);
+
+        // console.log(d1, d2)
+        let normal = new THREE.Vector3().crossVectors(d2, d1);
+        // normal.crossVectors(d1, d2);
+        // console.log(normal)
+        normal.normalize();
+        return normal;
+      };
       let GetBoneTransform = (boneId) => {
+        // return scene.getObjectByName("Character1_" + GetBoneTransform_text(boneId))
+        return scene.getObjectByName(
+          "mixamorig" + GetBoneTransform_text(boneId)
+        );
+      };
+      let GetBoneTransform_text = (boneId) => {
         switch (boneId) {
           case 0:
-            return "Hips"
+            return "Hips";
           case 1:
-            return "RightUpLeg"
+            return "RightUpLeg";
           case 2:
-            return "RightLeg"
+            return "RightLeg";
           case 3:
-            return "RightFoot"
+            return "RightFoot";
           case 4:
-            return "LeftUpLeg"
+            return "LeftUpLeg";
           case 5:
-            return "LeftLeg"
+            return "LeftLeg";
           case 6:
-            return "LeftFoot"
+            return "LeftFoot";
           case 7:
-            return "Spine"
+            return "Spine";
           case 8:
-            return "Spine1"
+            return "Neck";
           case 9:
-            return "Neck"
+            return "";
           case 10:
-            return "Head"
+            return "Head";
           case 11:
-            return "LeftShoulder"
+            return "LeftShoulder";
           case 12:
-            return "LeftArm"
+            return "LeftArm";
           case 13:
-            return "LeftHand"
+            return "LeftHand";
           case 14:
-            return "RightShoulder"
+            return "RightShoulder";
           case 15:
-            return "RightArm"
+            return "RightArm";
           case 16:
-            return "RightHand"
+            return "RightHand";
           default:
-            return "unknown"
+            return "unknown";
         }
-      }
+      };
       /*
         bone_t[0] = anim.GetBoneTransform(HumanBodyBones.Hips);
         bone_t[1] = anim.GetBoneTransform(HumanBodyBones.RightUpperLeg);
@@ -126,16 +286,16 @@ export default {
       // floor.position.y = -0.001;
       // scene.add(floor);
 
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.6)
+      const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
       //光源等位置
-      dirLight.position.set(-10, 8, -5)
+      dirLight.position.set(-10, 8, -5);
       //可以产生阴影
-      dirLight.castShadow = true
-      dirLight.shadow.mapSize = new THREE.Vector2(1024, 1024)
-      scene.add(dirLight)
-      const hemLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6)
-      hemLight.position.set(0, 48, 0)
-      scene.add(hemLight)
+      dirLight.castShadow = true;
+      dirLight.shadow.mapSize = new THREE.Vector2(1024, 1024);
+      scene.add(dirLight);
+      const hemLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+      hemLight.position.set(0, 48, 0);
+      scene.add(hemLight);
       function resizeRendererToDisplaySize(renderer) {
         const canvas = renderer.domElement;
         var width = window.innerWidth;
@@ -154,6 +314,7 @@ export default {
         // renderer.render(scene, camera)
         controls.enableDamping = true;
         controls.update();
+        // console.log(camera.rotation)
         renderer.render(scene, camera);
         requestAnimationFrame(animate);
         if (resizeRendererToDisplaySize(renderer)) {
