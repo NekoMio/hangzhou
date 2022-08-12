@@ -12,7 +12,7 @@ import data from "./assets/3d_data0.json";
 let bones = [1, 2, 4, 5, 7, 8, 11, 12, 14, 15]; // 親ボーン
 let child_bones = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16];
 let init_inv = new Array();
-let init_rot = new Array();
+let init_vec = new Array();
 let scale_ratio = 0.003;
 let heal_position = 0.0;
 let init_position;
@@ -69,38 +69,48 @@ export default {
 
         // Test Update
 
+        for (let i = 0; i < bones.length; i++) {
+          const b = bones[i];
+          const c = child_bones[i];
+          let vecB = new THREE.Vector3();
+          let vecC = new THREE.Vector3();
+          GetBoneTransform(b).getWorldPosition(vecB);
+          GetBoneTransform(c).getWorldPosition(vecC);
+          init_vec[i].subVectors(vecB, vecC);
+        }
+
         let now_pos = [];
         for (let i = 0; i < data[0].length; i++) {
           now_pos[i] = new THREE.Vector3(data[0][i], data[2][i], -data[1][i]);
         }
         let pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
         console.log(pos_forward);
+        
+
 
       });
       let LookRotation = (forward, up) => {
-        // forward.Normalize();
-
-        var vector = forward.clone().normalize();
-        var vector2 = new THREE.Vector3().crossVectors(up, vector).normalize();
-        var vector3 = new THREE.Vector3()
+        const vector = forward.clone().normalize();
+        const vector2 = new THREE.Vector3()
+          .crossVectors(up, vector)
+          .normalize();
+        const vector3 = new THREE.Vector3()
           .crossVectors(vector, vector2)
           .normalize();
-        // Vector3 vector2 = Vector3.Normalize(Vector3.Cross(up, vector));
-        // Vector3 vector3 = Vector3.Cross(vector, vector2);
-        var m00 = vector2.x;
-        var m01 = vector2.y;
-        var m02 = vector2.z;
-        var m10 = vector3.x;
-        var m11 = vector3.y;
-        var m12 = vector3.z;
-        var m20 = vector.x;
-        var m21 = vector.y;
-        var m22 = vector.z;
+        const m00 = vector2.x;
+        const m01 = vector2.y;
+        const m02 = vector2.z;
+        const m10 = vector3.x;
+        const m11 = vector3.y;
+        const m12 = vector3.z;
+        const m20 = vector.x;
+        const m21 = vector.y;
+        const m22 = vector.z;
 
-        var num8 = m00 + m11 + m22;
-        var quaternion = new THREE.Quaternion();
+        const num8 = m00 + m11 + m22;
+        const quaternion = new THREE.Quaternion();
         if (num8 > 0) {
-          var num = Math.sqrt(num8 + 1);
+          let num = Math.sqrt(num8 + 1);
           quaternion.w = num * 0.5;
           num = 0.5 / num;
           quaternion.x = (m12 - m21) * num;
@@ -109,8 +119,8 @@ export default {
           return quaternion;
         }
         if (m00 >= m11 && m00 >= m22) {
-          var num7 = Math.sqrt(1 + m00 - m11 - m22);
-          var num4 = 0.5 / num7;
+          const num7 = Math.sqrt(1 + m00 - m11 - m22);
+          const num4 = 0.5 / num7;
           quaternion.x = 0.5 * num7;
           quaternion.y = (m01 + m10) * num4;
           quaternion.z = (m02 + m20) * num4;
@@ -118,16 +128,16 @@ export default {
           return quaternion;
         }
         if (m11 > m22) {
-          var num6 = Math.sqrt(1 + m11 - m00 - m22);
-          var num3 = 0.5 / num6;
+          const num6 = Math.sqrt(1 + m11 - m00 - m22);
+          const num3 = 0.5 / num6;
           quaternion.x = (m10 + m01) * num3;
           quaternion.y = 0.5 * num6;
           quaternion.z = (m21 + m12) * num3;
           quaternion.w = (m20 - m02) * num3;
           return quaternion;
         }
-        var num5 = Math.sqrt(1 + m22 - m00 - m11);
-        var num2 = 0.5 / num5;
+        const num5 = Math.sqrt(1 + m22 - m00 - m11);
+        const num2 = 0.5 / num5;
         quaternion.x = (m20 + m02) * num2;
         quaternion.y = (m21 + m12) * num2;
         quaternion.z = 0.5 * num5;
