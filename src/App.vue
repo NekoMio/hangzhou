@@ -1,11 +1,35 @@
 <template>
-  <div>
-    <canvas id="three"></canvas>
+  <div
+    class="w-screen h-screen left-0 top-0 fixed"
+    style="
+      background: linear-gradient(156.78deg, #5367c9 29.61%, #b691c1 85.65%);
+    "
+  >
+    <canvas
+      class="w-screen h-screen fixed left-0 top-0 z-50"
+      id="three"
+    ></canvas>
+    <div class="w-screen h-screen left-0 top-0 z-10 fixed">
+      <div class="left-4 top-6 w-40 h-32 flex flex-col items-center">
+        <div class="m-0 text-xs not-italic font-serif font-normal leading-4 text-white">亚运会体育图标动作模仿游戏</div>
+        <img class="mt-2 w-24 h-24" src="./assets/img/logo.png">
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
-import * as THREE from "three";
+import {
+  Scene,
+  WebGLRenderer,
+  AxesHelper,
+  PerspectiveCamera,
+  Vector3,
+  Vector2,
+  Quaternion,
+  DirectionalLight,
+  HemisphereLight,
+} from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import data from "./assets/3d_data0.json";
@@ -24,13 +48,17 @@ export default {
   },
   methods: {
     initThree() {
-      scene = new THREE.Scene();
-      scene.background = new THREE.Color("#eee");
+      scene = new Scene();
+      // scene.background = new THREE.Color("0x00000000");
       const canvas = document.querySelector("#three");
       const loader = new FBXLoader();
-      const renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
-      const axes = new THREE.AxesHelper();
-      const camera = new THREE.PerspectiveCamera(
+      const renderer = new WebGLRenderer({
+        canvas,
+        antialias: true,
+        alpha: true,
+      });
+      const axes = new AxesHelper();
+      const camera = new PerspectiveCamera(
         60,
         window.innerWidth / window.innerHeight,
         0.3,
@@ -38,6 +66,8 @@ export default {
       );
       const controls = new OrbitControls(camera, renderer.domElement);
       camera.position.set(0, 0, 2);
+      renderer.setClearColor(0xffffff, 0);
+      scene.background = null;
       // camera.rotation.set(0, 0, 0)
       camera.up.set(0, 1, 0);
       scene.add(axes);
@@ -53,50 +83,87 @@ export default {
           }
         });
         // let root = scene.getObjectByProperty("type", "Bone");
-        console.log(object);
+        // console.log(object);
         let init_forward = TriangleNormal(
           GetBoneTransform(7).position,
           GetBoneTransform(4).position,
           GetBoneTransform(1).position
         );
-        console.log(init_forward);
-        init_inv[0] = LookRotation(
-          init_forward,
-          new THREE.Vector3(0, 1, 0)
-        ).invert();
-        init_position = new THREE.Vector3();
-        GetBoneTransform(0).getWorldPosition(init_position);
+        // console.log(init_forward);
+        init_inv[0] = LookRotation(init_forward, new Vector3(0, 1, 0)).invert();
+        // init_position = new THREE.Vector3();
+        // scene.updateMatrixWorld(true);
+        // GetBoneTransform(0).getWorldPosition(init_position);
+        init_position = GetBoneTransform(0).position.clone();
 
         // Test Update
+
+        // for (let i = 0; i < bones.length; i++) {
+        //   const b = bones[i];
+        //   const c = child_bones[i];
+        //   let vecB = new THREE.Vector3();
+        //   let vecC = new THREE.Vector3();
+        //   GetBoneTransform(b).getWorldPosition(vecB);
+        //   GetBoneTransform(c).getWorldPosition(vecC);
+        //   // let vecB = GetBoneTransform(b).position.clone();
+        //   // let vecC = GetBoneTransform(c).position.clone();
+        //   console.log(vecB, vecC);
+        //   init_vec[i] = vecB.clone().sub(vecC).normalize();
+        // }
+        // console.log("\n");
+        let now_pos = [];
+        for (let i = 0; i < data[0].length; i++) {
+          now_pos[i] = new Vector3(data[0][i], data[2][i], -data[1][i]);
+        }
+        let pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
+        // console.log(pos_forward);
+
+        // console.log(init_position)
+
+        // GetBoneTransform(0).position.set(init_position.x + now_pos[0].x * scale_ratio, init_position.y + now_pos[0].y * scale_ratio, init_position.z + now_pos[0].z * scale_ratio);
+        // scene.updateMatrixWorld(true);
 
         for (let i = 0; i < bones.length; i++) {
           const b = bones[i];
           const c = child_bones[i];
-          let vecB = new THREE.Vector3();
-          let vecC = new THREE.Vector3();
+          let now_vec = now_pos[c].clone().sub(now_pos[b]).normalize();
+          let vecB = new Vector3();
+          let vecC = new Vector3();
+          scene.updateMatrixWorld(true);
           GetBoneTransform(b).getWorldPosition(vecB);
           GetBoneTransform(c).getWorldPosition(vecC);
-          init_vec[i].subVectors(vecB, vecC);
+          let init_vec = vecC.clone().sub(vecB).normalize();
+
+          // if (bones.length - i <= 2) {
+          //   console.log(b, c)
+          // }
+          let rotation = new Quaternion().setFromUnitVectors(
+            // GetBoneTransform(b).position.clone().sub(GetBoneTransform(c).position).normalize(),
+            init_vec,
+            now_vec
+          );
+
+          // console.log(rotation);
+
+          GetBoneTransform(b).quaternion.multiply(rotation);
+          // vec = GetBoneTransform(child_bones[i]).position.clone().sub(GetBoneTransform(bones[i]).position.clone());
+          // GetBoneTransform(c).getWorldPosition(vecC);
+          // GetBoneTransform(b).getWorldPosition(vecB);
+          // console.log(vecC.clone().sub(vecB).normalize());
+          // console.log(now_vec);
         }
-
-        let now_pos = [];
-        for (let i = 0; i < data[0].length; i++) {
-          now_pos[i] = new THREE.Vector3(data[0][i], data[2][i], -data[1][i]);
-        }
-        let pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
-        console.log(pos_forward);
-        
-
-
+        scene.updateMatrixWorld(true);
+        GetBoneTransform(0).position.set(
+          now_pos[0].x * scale_ratio,
+          now_pos[0].y * scale_ratio,
+          now_pos[0].z * scale_ratio
+        );
+        // console.log(object)
       });
       let LookRotation = (forward, up) => {
         const vector = forward.clone().normalize();
-        const vector2 = new THREE.Vector3()
-          .crossVectors(up, vector)
-          .normalize();
-        const vector3 = new THREE.Vector3()
-          .crossVectors(vector, vector2)
-          .normalize();
+        const vector2 = new Vector3().crossVectors(up, vector).normalize();
+        const vector3 = new Vector3().crossVectors(vector, vector2).normalize();
         const m00 = vector2.x;
         const m01 = vector2.y;
         const m02 = vector2.z;
@@ -108,7 +175,7 @@ export default {
         const m22 = vector.z;
 
         const num8 = m00 + m11 + m22;
-        const quaternion = new THREE.Quaternion();
+        const quaternion = new Quaternion();
         if (num8 > 0) {
           let num = Math.sqrt(num8 + 1);
           quaternion.w = num * 0.5;
@@ -145,12 +212,12 @@ export default {
         return quaternion;
       };
       let TriangleNormal = (a, b, c) => {
-        console.log(a, b, c);
-        let d1 = new THREE.Vector3().subVectors(a, b);
-        let d2 = new THREE.Vector3().subVectors(a, c);
+        // console.log(a, b, c);
+        let d1 = new Vector3().subVectors(a, b);
+        let d2 = new Vector3().subVectors(a, c);
 
         // console.log(d1, d2)
-        let normal = new THREE.Vector3().crossVectors(d2, d1);
+        let normal = new Vector3().crossVectors(d2, d1);
         // normal.crossVectors(d1, d2);
         // console.log(normal)
         normal.normalize();
@@ -187,17 +254,29 @@ export default {
           case 10:
             return "Head";
           case 11:
-            return "LeftShoulder";
-          case 12:
             return "LeftArm";
+          case 12:
+            return "LeftForeArm";
           case 13:
             return "LeftHand";
           case 14:
-            return "RightShoulder";
-          case 15:
             return "RightArm";
+          case 15:
+            return "RightForeArm";
           case 16:
             return "RightHand";
+          // case 11:
+          //   return "LeftShoulder";
+          // case 12:
+          //   return "LeftArm";
+          // case 13:
+          //   return "LeftHand";
+          // case 14:
+          //   return "RightShoulder";
+          // case 15:
+          //   return "RightArm";
+          // case 16:
+          //   return "RightHand";
           default:
             return "unknown";
         }
@@ -228,14 +307,14 @@ export default {
       // floor.position.y = -0.001;
       // scene.add(floor);
 
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.6);
+      const dirLight = new DirectionalLight(0xffffff, 0.6);
       //光源等位置
       dirLight.position.set(-10, 8, -5);
       //可以产生阴影
       dirLight.castShadow = true;
-      dirLight.shadow.mapSize = new THREE.Vector2(1024, 1024);
+      dirLight.shadow.mapSize = new Vector2(1024, 1024);
       scene.add(dirLight);
-      const hemLight = new THREE.HemisphereLight(0xffffff, 0xffffff, 0.6);
+      const hemLight = new HemisphereLight(0xffffff, 0xffffff, 0.6);
       hemLight.position.set(0, 48, 0);
       scene.add(hemLight);
       function resizeRendererToDisplaySize(renderer) {
@@ -271,12 +350,4 @@ export default {
 };
 </script>
 
-<style scoped>
-#three {
-  width: 100%;
-  height: 100%;
-  position: fixed;
-  left: 0;
-  top: 0;
-}
-</style>
+<style scoped></style>
