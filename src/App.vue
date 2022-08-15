@@ -6,15 +6,34 @@
     "
   >
     <canvas
-      class="w-screen h-screen fixed left-0 top-0 z-50"
+      class="w-2/3 h-2/3 bottom-[16.666667%] left-[8%] fixed z-50"
       id="three"
     ></canvas>
     <div class="w-screen h-screen left-0 top-0 z-10 fixed">
       <div class="left-4 top-6 w-40 h-32 flex flex-col items-center">
         <div class="m-0 text-xs not-italic font-serif font-normal leading-4 text-white">亚运会体育图标动作模仿游戏</div>
-        <img class="mt-2 w-24 h-24" src="./assets/img/logo.png">
+        <img class="mt-2 w-28 h-28" src="./assets/img/logo.svg" alt="logo" />
+      </div>
+      <div class="right-4 top-6 w-56 h-auto fixed flex flex-col rounded-lg shadow-2xl shadow-slate-800" style="background-color: rgba(16, 15, 70, 0.5);">
+        <div class="w-32 ml-3 mt-10 text-xl leading-6 font-normal font-serif text-white">模仿这个动作开始游戏吧！</div>
+        <div class="w-3/4 mx-3 my-4 bg-white h-0.5"></div>
+        <div class="w-32 ml-3 text-xl leading-6 font-normal font-serif text-white">{{ poseNameCN }}</div>
+        <div class="w-32 ml-3 text-xl leading-6 font-normal font-serif text-white">{{ poseNameEN }}</div>
+        <img class="w-52 mx-auto mt-3 mb-5" src="/pic/cut/pose-09-crop.png" />
+      </div>
+      <div class="rounded-full w-11 h-11 left-[1.1875rem] border-[3px] top-8 mt-4 mb-4 border-solid border-white text-xl text-white font-mono font-normal flex items-center justify-around flex-col">
+        {{ percentage }}
+      </div>
+      <div class="h-1/2 w-2.5 left-9 rounded-full top-8 bg-white">
+        <!-- <div class="h-full w-full rounded-full" style="background: linear-gradient(180deg, #E48225 0%, rgba(254, 223, 77, 0) 100%)"> -->
+        <div class="w-full absolute bottom-0 block rounded-full" :style="{background: 'linear-gradient(180deg, #E48225 0%, rgba(254, 223, 77, 0) 100%)', height: percentage + '%'}">
+          <div class="w-5 h-5 -top-2.5 -left-[0.3125rem] absolute rounded-full bg-yellow-200 blur-sm"></div>
+        </div>
+        <!-- </div> -->
       </div>
     </div>
+    <img class="bottom-0 w-screen h-auto z-0 fixed" src="./assets/img/bottom-bg.svg" alt="" />
+
   </div>
 </template>
 
@@ -43,6 +62,13 @@ let init_position;
 let scene = null;
 
 export default {
+  data() {
+    return {
+      poseNameCN: "跆拳道",
+      poseNameEN: "Taekwondo",
+      percentage: 50,
+    }
+  },
   mounted() {
     this.initThree();
   },
