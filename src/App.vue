@@ -15,22 +15,36 @@
         <img class="mt-2 w-28 h-28" src="./assets/img/logo.svg" alt="logo" />
       </div>
       <div class="right-4 top-6 w-56 h-auto fixed flex flex-col rounded-lg shadow-2xl shadow-slate-800" style="background-color: rgba(16, 15, 70, 0.5);">
-        <div class="w-32 ml-3 mt-10 text-xl leading-6 font-normal font-serif text-white">模仿这个动作开始游戏吧！</div>
+        <div v-if="!started" class="w-32 ml-3 mt-10 text-xl leading-6 font-normal font-serif text-white">模仿这个动作开始游戏吧！</div>
+        <template v-else>
+          <div class="w-32 ml-3 mt-4 text-xl leading-6 font-normal font-serif text-white">
+            当前动作
+          </div>
+          <div class="w-32 ml-3 mt-4 text-xl leading-6 font-normal font-serif text-white">
+            <span class="ml-1 icon-before icon-solid icon-clock-rotate-left"></span>
+            <span class="ml-3">{{ currentTime }} s</span>
+          </div>
+        </template>
         <div class="w-3/4 mx-3 my-4 bg-white h-0.5"></div>
         <div class="w-32 ml-3 text-xl leading-6 font-normal font-serif text-white">{{ poseNameCN }}</div>
         <div class="w-32 ml-3 text-xl leading-6 font-normal font-serif text-white">{{ poseNameEN }}</div>
-        <img class="w-52 mx-auto mt-3 mb-5" src="/pic/cut/pose-09-crop.png" />
+        <img class="w-52 mx-auto mt-3 mb-5" :src="posePic" />
+
       </div>
-      <div class="rounded-full w-11 h-11 left-[1.1875rem] border-[3px] top-8 mt-4 mb-4 border-solid border-white text-xl text-white font-mono font-normal flex items-center justify-around flex-col">
-        {{ percentage }}
-      </div>
-      <div class="h-1/2 w-2.5 left-9 rounded-full top-8 bg-white">
-        <!-- <div class="h-full w-full rounded-full" style="background: linear-gradient(180deg, #E48225 0%, rgba(254, 223, 77, 0) 100%)"> -->
-        <div class="w-full absolute bottom-0 block rounded-full" :style="{background: 'linear-gradient(180deg, #E48225 0%, rgba(254, 223, 77, 0) 100%)', height: percentage + '%'}">
-          <div class="w-5 h-5 -top-2.5 -left-[0.3125rem] absolute rounded-full bg-yellow-200 blur-sm"></div>
+      <template v-if="started">
+        
+        <div class="h-1/2 w-2.5 left-9 rounded-full top-8" style="background: linear-gradient(180deg, rgb(0, 255, 0, 255) 0%, rgb(255, 0, 0, 255) 100%)">
+          <div class="w-5 h-5 top-32 -left-[0.3125rem] absolute rounded-full bg-white blur-[2px]"></div>
+          <!-- <div class="h-full w-full rounded-full" style="background: linear-gradient(180deg, #E48225 0%, rgba(254, 223, 77, 0) 100%)"> -->
+          <div class="w-full absolute bottom-0 block rounded-full" :style="{ height: percentage + '%'}">
+            <div class="rounded-full w-11 h-11 left-6 border-[3px] -top-5 mb-4 border-solid border-white text-xl text-white font-mono font-normal flex items-center justify-around flex-col">
+              {{ percentage }}
+            </div>
+            <div class="w-6 h-6 -top-2.5 -left-[0.4375rem] absolute rounded-full bg-yellow-200 blur-[2px]"></div>
+          </div>
+          <!-- </div> -->
         </div>
-        <!-- </div> -->
-      </div>
+      </template>
     </div>
     <img class="bottom-0 w-screen h-auto z-0 fixed" src="./assets/img/bottom-bg.svg" alt="" />
 
@@ -38,6 +52,7 @@
 </template>
 
 <script>
+
 import {
   Scene,
   WebGLRenderer,
@@ -66,11 +81,18 @@ export default {
     return {
       poseNameCN: "跆拳道",
       poseNameEN: "Taekwondo",
-      percentage: 50,
+      posePic: "/pic/cut/pose-09-crop.png",
+      percentage: 40,
+      started: false,
+      currentTime: "00:14",
     }
   },
   mounted() {
     this.initThree();
+    // setInterval(() => {
+    //   this.percentage += 1;
+    //   // this.currentTime = this.getTime();
+    // }, 200);
   },
   methods: {
     initThree() {
@@ -124,18 +146,6 @@ export default {
 
         // Test Update
 
-        // for (let i = 0; i < bones.length; i++) {
-        //   const b = bones[i];
-        //   const c = child_bones[i];
-        //   let vecB = new THREE.Vector3();
-        //   let vecC = new THREE.Vector3();
-        //   GetBoneTransform(b).getWorldPosition(vecB);
-        //   GetBoneTransform(c).getWorldPosition(vecC);
-        //   // let vecB = GetBoneTransform(b).position.clone();
-        //   // let vecC = GetBoneTransform(c).position.clone();
-        //   console.log(vecB, vecC);
-        //   init_vec[i] = vecB.clone().sub(vecC).normalize();
-        // }
         // console.log("\n");
         let now_pos = [];
         for (let i = 0; i < data[0].length; i++) {
@@ -172,11 +182,6 @@ export default {
           // console.log(rotation);
 
           GetBoneTransform(b).quaternion.multiply(rotation);
-          // vec = GetBoneTransform(child_bones[i]).position.clone().sub(GetBoneTransform(bones[i]).position.clone());
-          // GetBoneTransform(c).getWorldPosition(vecC);
-          // GetBoneTransform(b).getWorldPosition(vecB);
-          // console.log(vecC.clone().sub(vecB).normalize());
-          // console.log(now_vec);
         }
         scene.updateMatrixWorld(true);
         GetBoneTransform(0).position.set(
