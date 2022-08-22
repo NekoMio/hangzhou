@@ -11,48 +11,93 @@
     ></canvas>
     <div class="w-screen h-screen left-0 top-0 z-10 fixed">
       <div class="left-4 top-6 w-40 h-32 flex flex-col items-center">
-        <div class="m-0 text-xs not-italic font-serif font-normal leading-4 text-white">亚运会体育图标动作模仿游戏</div>
+        <div
+          class="m-0 text-xs not-italic font-serif font-normal leading-4 text-white"
+        >
+          亚运会体育图标动作模仿游戏 
+        </div>
         <img class="mt-2 w-28 h-28" src="./assets/img/logo.svg" alt="logo" />
       </div>
-      <div class="right-4 top-6 w-56 h-auto fixed flex flex-col rounded-lg shadow-2xl shadow-slate-800" style="background-color: rgba(16, 15, 70, 0.5);">
-        <div v-if="!started" class="w-32 ml-3 mt-10 text-xl leading-6 font-normal font-serif text-white">模仿这个动作开始游戏吧！</div>
+      <div
+        class="right-4 top-6 w-56 h-auto fixed flex flex-col rounded-lg shadow-2xl shadow-slate-800"
+        style="background-color: rgba(16, 15, 70, 0.5)"
+      >
+        <div
+          v-if="!started"
+          class="w-32 ml-3 mt-10 text-xl leading-6 font-normal font-serif text-white animate-pulse"
+          
+        >
+          模仿这个动作开始游戏吧！
+        </div>
         <template v-else>
-          <div class="w-32 ml-3 mt-4 text-xl leading-6 font-normal font-serif text-white">
+          <div
+            class="w-32 ml-3 mt-4 text-xl leading-6 font-normal font-serif text-white"
+          >
             当前动作
           </div>
-          <div class="w-32 ml-3 mt-4 text-xl leading-6 font-normal font-serif text-white">
-            <span class="ml-1 icon-before icon-solid icon-clock-rotate-left"></span>
+          <div
+            class="w-32 ml-3 mt-4 text-xl leading-6 font-normal font-serif text-white"
+          >
+            <span
+              class="ml-1 icon-before icon-solid icon-clock-rotate-left"
+            ></span>
             <span class="ml-3">{{ currentTime }} s</span>
           </div>
         </template>
         <div class="w-3/4 mx-3 my-4 bg-white h-0.5"></div>
-        <div class="w-32 ml-3 text-xl leading-6 font-normal font-serif text-white">{{ poseNameCN }}</div>
-        <div class="w-32 ml-3 text-xl leading-6 font-normal font-serif text-white">{{ poseNameEN }}</div>
+        <div
+          class="w-32 ml-3 text-xl leading-6 font-normal font-serif text-white"
+        >
+          {{ poseNameCN }}
+        </div>
+        <div
+          class="w-32 ml-3 text-xl leading-6 font-normal font-serif text-white"
+        >
+          {{ poseNameEN }}
+        </div>
         <img class="w-52 mx-auto mt-3 mb-5" :src="posePic" />
-
       </div>
       <template v-if="started">
-        
-        <div class="h-1/2 w-2.5 left-9 rounded-full top-8" style="background: linear-gradient(180deg, rgb(0, 255, 0, 255) 0%, rgb(255, 0, 0, 255) 100%)">
-          <div class="w-5 h-5 top-32 -left-[0.3125rem] absolute rounded-full bg-white blur-[2px]"></div>
+        <div
+          class="h-1/2 w-2.5 left-9 rounded-full top-8"
+          style="
+            background: linear-gradient(
+              180deg,
+              rgb(0, 255, 0, 255) 0%,
+              rgb(255, 0, 0, 255) 100%
+            );
+          "
+        >
+          <div
+            class="w-5 h-5 top-32 -left-[0.3125rem] absolute rounded-full bg-white blur-[2px]"
+          ></div>
           <!-- <div class="h-full w-full rounded-full" style="background: linear-gradient(180deg, #E48225 0%, rgba(254, 223, 77, 0) 100%)"> -->
-          <div class="w-full absolute bottom-0 block rounded-full" :style="{ height: percentage + '%'}">
-            <div class="rounded-full w-11 h-11 left-6 border-[3px] -top-5 mb-4 border-solid border-white text-xl text-white font-mono font-normal flex items-center justify-around flex-col">
+          <div
+            class="w-full absolute bottom-0 block rounded-full"
+            :style="{ height: percentage + '%' }"
+          >
+            <div
+              class="rounded-full w-11 h-11 left-6 border-[3px] -top-5 mb-4 border-solid border-white text-xl text-white font-mono font-normal flex items-center justify-around flex-col"
+            >
               {{ percentage }}
             </div>
-            <div class="w-6 h-6 -top-2.5 -left-[0.4375rem] absolute rounded-full bg-yellow-200 blur-[2px]"></div>
+            <div
+              class="w-6 h-6 -top-2.5 -left-[0.4375rem] absolute rounded-full bg-yellow-200 blur-[2px]"
+            ></div>
           </div>
           <!-- </div> -->
         </div>
       </template>
     </div>
-    <img class="bottom-0 w-screen h-auto z-0 fixed" src="./assets/img/bottom-bg.svg" alt="" />
-
+    <img
+      class="bottom-0 w-screen h-auto z-0 fixed"
+      src="./assets/img/bottom-bg.svg"
+      alt=""
+    />
   </div>
 </template>
 
 <script>
-
 import {
   Scene,
   WebGLRenderer,
@@ -63,10 +108,11 @@ import {
   Quaternion,
   DirectionalLight,
   HemisphereLight,
+  SkeletonHelper,
 } from "three";
+import { inject } from "vue";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
-import data from "./assets/3d_data0.json";
 let bones = [1, 2, 4, 5, 7, 8, 11, 12, 14, 15]; // 親ボーン
 let child_bones = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16];
 let init_inv = new Array();
@@ -85,27 +131,63 @@ export default {
       percentage: 40,
       started: false,
       currentTime: "00:14",
-    }
+      preData: {},
+      // socket = inject("socket"),
+    };
   },
   mounted() {
     this.initThree();
+    this.$socket.on("connect", () => {
+      console.log("connect");
+      this.$socket.emit("connection", "connected");
+    });
+    this.$socket.on("disconnect", () => {
+      console.log("disconnect");
+    });
+    this.$socket.on("message", (data) => {
+      data = data[0]
+      console.log(data);
+      // data = JSON.parse(data);
+      
+      if (data.started == true) {
+        if (this.started == false) {
+          this.currentTime = 0;
+        } 
+      }
+      if (data.started == false) {
+        if (this.started == true) {
+          this.showEndPage();
+        }
+      }
+
+      this.started = data.started;
+      this.percentage = data.percentage;
+      this.poseNameCN = data.poseID;
+      this.poseNameEN = data.poseID;
+      this.posePic = this.getPicUrl(data.poseID);
+      this.updatePos(data["3dpose"]);
+    });
     // setInterval(() => {
     //   this.percentage += 1;
     //   // this.currentTime = this.getTime();
     // }, 200);
   },
   methods: {
+    getPicUrl(poseNameEN) {
+      return `/pic/cut/${poseNameEN}.png`;
+    }, // 获取图片url
     initThree() {
       scene = new Scene();
       // scene.background = new THREE.Color("0x00000000");
       const canvas = document.querySelector("#three");
       const loader = new FBXLoader();
+      
       const renderer = new WebGLRenderer({
         canvas,
         antialias: true,
         alpha: true,
       });
-      const axes = new AxesHelper();
+      // const axes = new AxesHelper();
       const camera = new PerspectiveCamera(
         60,
         window.innerWidth / window.innerHeight,
@@ -113,14 +195,14 @@ export default {
         1000
       );
       const controls = new OrbitControls(camera, renderer.domElement);
-      camera.position.set(0, 0, 2);
+      camera.position.set(0, 0, 3);
       renderer.setClearColor(0xffffff, 0);
       scene.background = null;
       // camera.rotation.set(0, 0, 0)
-      camera.up.set(0, 1, 0);
-      scene.add(axes);
-      loader.load("/model/xbot.fbx", (object) => {
-        object.scale.set(0.01, 0.01, 0.01);
+      camera.up.set(0, 1.5, 0);
+      // scene.add(axes);
+      loader.load("/model/box.fbx", (object) => {
+        object.scale.set(0.03, 0.03, 0.03);
         object.position.set(0, 0, 0);
         object.rotation.set(0, 0, 0);
         scene.add(object);
@@ -131,66 +213,33 @@ export default {
           }
         });
         // let root = scene.getObjectByProperty("type", "Bone");
-        // console.log(object);
-        let init_forward = TriangleNormal(
-          GetBoneTransform(7).position,
-          GetBoneTransform(4).position,
-          GetBoneTransform(1).position
+        console.log(object);
+        const helper = new SkeletonHelper(object);
+        helper.material.linewidth = 2;
+        scene.add(helper);
+        let init_forward = this.TriangleNormal(
+          this.GetBoneTransform(7).position,
+          this.GetBoneTransform(4).position,
+          this.GetBoneTransform(1).position
         );
         // console.log(init_forward);
         init_inv[0] = LookRotation(init_forward, new Vector3(0, 1, 0)).invert();
         // init_position = new THREE.Vector3();
         // scene.updateMatrixWorld(true);
-        // GetBoneTransform(0).getWorldPosition(init_position);
-        init_position = GetBoneTransform(0).position.clone();
-
+        // this.GetBoneTransform(0).getWorldPosition(init_position);
+        // init_position = this.GetBoneTransform(0).position.clone();
+        this.GetBoneTransform(0).position.set(0, 0, 0);
         // Test Update
+        
+        // let init_pos = new Vector3();
+        // let init_rev = new Quaternion()
+        // this.GetBoneTransform(11).getWorldPosition(init_pos);
+        // ;
+        // console.log(init_pos, this.GetBoneTransform(11).quaternion);
 
-        // console.log("\n");
-        let now_pos = [];
-        for (let i = 0; i < data[0].length; i++) {
-          now_pos[i] = new Vector3(data[0][i], data[2][i], -data[1][i]);
-        }
-        let pos_forward = TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
-        // console.log(pos_forward);
-
-        // console.log(init_position)
-
-        // GetBoneTransform(0).position.set(init_position.x + now_pos[0].x * scale_ratio, init_position.y + now_pos[0].y * scale_ratio, init_position.z + now_pos[0].z * scale_ratio);
-        // scene.updateMatrixWorld(true);
-
-        for (let i = 0; i < bones.length; i++) {
-          const b = bones[i];
-          const c = child_bones[i];
-          let now_vec = now_pos[c].clone().sub(now_pos[b]).normalize();
-          let vecB = new Vector3();
-          let vecC = new Vector3();
-          scene.updateMatrixWorld(true);
-          GetBoneTransform(b).getWorldPosition(vecB);
-          GetBoneTransform(c).getWorldPosition(vecC);
-          let init_vec = vecC.clone().sub(vecB).normalize();
-
-          // if (bones.length - i <= 2) {
-          //   console.log(b, c)
-          // }
-          let rotation = new Quaternion().setFromUnitVectors(
-            // GetBoneTransform(b).position.clone().sub(GetBoneTransform(c).position).normalize(),
-            init_vec,
-            now_vec
-          );
-
-          // console.log(rotation);
-
-          GetBoneTransform(b).quaternion.multiply(rotation);
-        }
-        scene.updateMatrixWorld(true);
-        GetBoneTransform(0).position.set(
-          now_pos[0].x * scale_ratio,
-          now_pos[0].y * scale_ratio,
-          now_pos[0].z * scale_ratio
-        );
         // console.log(object)
       });
+
       let LookRotation = (forward, up) => {
         const vector = forward.clone().normalize();
         const vector2 = new Vector3().crossVectors(up, vector).normalize();
@@ -242,76 +291,7 @@ export default {
         quaternion.w = (m01 - m10) * num2;
         return quaternion;
       };
-      let TriangleNormal = (a, b, c) => {
-        // console.log(a, b, c);
-        let d1 = new Vector3().subVectors(a, b);
-        let d2 = new Vector3().subVectors(a, c);
 
-        // console.log(d1, d2)
-        let normal = new Vector3().crossVectors(d2, d1);
-        // normal.crossVectors(d1, d2);
-        // console.log(normal)
-        normal.normalize();
-        return normal;
-      };
-      let GetBoneTransform = (boneId) => {
-        // return scene.getObjectByName("Character1_" + GetBoneTransform_text(boneId))
-        return scene.getObjectByName(
-          "mixamorig" + GetBoneTransform_text(boneId)
-        );
-      };
-      let GetBoneTransform_text = (boneId) => {
-        switch (boneId) {
-          case 0:
-            return "Hips";
-          case 1:
-            return "RightUpLeg";
-          case 2:
-            return "RightLeg";
-          case 3:
-            return "RightFoot";
-          case 4:
-            return "LeftUpLeg";
-          case 5:
-            return "LeftLeg";
-          case 6:
-            return "LeftFoot";
-          case 7:
-            return "Spine";
-          case 8:
-            return "Neck";
-          case 9:
-            return "";
-          case 10:
-            return "Head";
-          case 11:
-            return "LeftArm";
-          case 12:
-            return "LeftForeArm";
-          case 13:
-            return "LeftHand";
-          case 14:
-            return "RightArm";
-          case 15:
-            return "RightForeArm";
-          case 16:
-            return "RightHand";
-          // case 11:
-          //   return "LeftShoulder";
-          // case 12:
-          //   return "LeftArm";
-          // case 13:
-          //   return "LeftHand";
-          // case 14:
-          //   return "RightShoulder";
-          // case 15:
-          //   return "RightArm";
-          // case 16:
-          //   return "RightHand";
-          default:
-            return "unknown";
-        }
-      };
       /*
         bone_t[0] = anim.GetBoneTransform(HumanBodyBones.Hips);
         bone_t[1] = anim.GetBoneTransform(HumanBodyBones.RightUpperLeg);
@@ -328,7 +308,7 @@ export default {
         bone_t[13] = anim.GetBoneTransform(HumanBodyBones.LeftHand);
         bone_t[14] = anim.GetBoneTransform(HumanBodyBones.RightUpperArm);
         bone_t[15] = anim.GetBoneTransform(HumanBodyBones.RightLowerArm);
-        bone_t[16] = anim.GetBoneTransform(HumanBodyBones.RightHand); 
+        bone_t[16] = anim.GetBoneTransform(HumanBodyBones.RightHand);
       */
       // let floorGeometry = new THREE.PlaneGeometry(3000, 3000);
       // let floorMaterial = new THREE.MeshPhongMaterial({ color: 0xff0000 });
@@ -376,6 +356,120 @@ export default {
         }
       }
       animate();
+    },
+    TriangleNormal(a, b, c) {
+      // console.log(a, b, c);
+      let d1 = new Vector3().subVectors(a, b);
+      let d2 = new Vector3().subVectors(a, c);
+
+      // console.log(d1, d2)
+      let normal = new Vector3().crossVectors(d2, d1);
+      // normal.crossVectors(d1, d2);
+      // console.log(normal)
+      normal.normalize();
+      return normal;
+    },
+    GetBoneTransform(boneId) {
+      // return scene.getObjectByName("Character1_" + GetBoneTransform_text(boneId))
+      return scene.getObjectByName("mixamorig" + this.GetBoneTransform_text(boneId));
+    },
+    GetBoneTransform_text(boneId) {
+      switch (boneId) {
+        case 0:
+          return "Hips";
+        case 1:
+          return "RightUpLeg";
+        case 2:
+          return "RightLeg";
+        case 3:
+          return "RightFoot";
+        case 4:
+          return "LeftUpLeg";
+        case 5:
+          return "LeftLeg";
+        case 6:
+          return "LeftFoot";
+        case 7:
+          return "Spine";
+        case 8:
+          return "Neck";
+        case 9:
+          return "";
+        case 10:
+          return "Head";
+        case 11:
+          return "LeftArm";
+        case 12:
+          return "LeftForeArm";
+        case 13:
+          return "LeftHand";
+        case 14:
+          return "RightArm";
+        case 15:
+          return "RightForeArm";
+        case 16:
+          return "RightHand";
+        // case 11:
+        //   return "LeftShoulder";
+        // case 12:
+        //   return "LeftArm";
+        // case 13:
+        //   return "LeftHand";
+        // case 14:
+        //   return "RightShoulder";
+        // case 15:
+        //   return "RightArm";
+        // case 16:
+        //   return "RightHand";
+        default:
+          return "unknown";
+      }
+    },
+    updatePos(data) {
+      // console.log("111");
+      console.log(data);
+      let now_pos = [];
+      for (let i = 0; i < data.length; i++) {
+        now_pos[i] = new Vector3(data[i][0], data[i][1], data[i][2]);
+      }
+      let pos_forward = this.TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
+      // console.log(pos_forward);
+
+      // console.log(init_position)
+
+      // GetBoneTransform(0).position.set(init_position.x + now_pos[0].x * scale_ratio, init_position.y + now_pos[0].y * scale_ratio, init_position.z + now_pos[0].z * scale_ratio);
+      // scene.updateMatrixWorld(true);
+
+      for (let i = 0; i < bones.length; i++) {
+        const b = bones[i];
+        const c = child_bones[i];
+        let now_vec = now_pos[c].clone().sub(now_pos[b]).normalize();
+        let vecB = new Vector3();
+        let vecC = new Vector3();
+        scene.updateMatrixWorld(true);
+        this.GetBoneTransform(b).getWorldPosition(vecB);
+        this.GetBoneTransform(c).getWorldPosition(vecC);
+        let init_vec = vecC.clone().sub(vecB).normalize();
+
+        // if (bones.length - i <= 2) {
+        //   console.log(b, c)
+        // }
+        let rotation = new Quaternion().setFromUnitVectors(
+          // this.GetBoneTransform(b).position.clone().sub(this.GetBoneTransform(c).position).normalize(),
+          init_vec,
+          now_vec
+        );
+
+        // console.log(rotation);
+
+        this.GetBoneTransform(b).applyQuaternion(rotation);
+      }
+      scene.updateMatrixWorld(true);
+      this.GetBoneTransform(0).position.set(
+        now_pos[0].x * scale_ratio,
+        now_pos[0].y * scale_ratio,
+        now_pos[0].z * scale_ratio
+      );
     },
   },
 };

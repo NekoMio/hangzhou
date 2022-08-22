@@ -1,0 +1,23 @@
+{
+  "started": true,
+  "3dpose": [[1, 1, 1]],
+  "score": 50,
+  "poseNameEN": "1",
+  "totalTime": 100000,
+  "ranking": 100,
+  "end": false,
+  "ranklist": [
+    {
+      "time": 1000,
+      "score": 50
+    },
+    {
+      "time": 1000,
+      "score": 50
+    },
+    {
+      "time": 1000,
+      "score": 50
+    }
+  ]
+}
