@@ -479,7 +479,8 @@ export default {
         // if (bones.length - i <= 2) {
         //   console.log(b, c)
         // }
-        init_vec.applyQuaternion(init_rot[b])
+        // init_vec.applyQuaternion(init_rot[b])
+        // now_vec.applyQuaternion(init_rot[b])
         console.log(init_vec, now_vec);
         let rotation = new Quaternion().setFromUnitVectors(
           // this.GetBoneTransform(b).position.clone().sub(this.GetBoneTransform(c).position).normalize(),
