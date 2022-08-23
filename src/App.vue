@@ -112,11 +112,12 @@ import {
 } from "three";
 import { inject } from "vue";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+// import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 let bones = [1, 2, 4, 5, 7, 8, 11, 12, 14, 15]; // 親ボーン
 let child_bones = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16];
 let init_inv = new Array();
-let init_vec = new Array();
+let init_rot = new Array();
 let scale_ratio = 0.003;
 let heal_position = 0.0;
 let init_position;
@@ -180,7 +181,8 @@ export default {
       scene = new Scene();
       // scene.background = new THREE.Color("0x00000000");
       const canvas = document.querySelector("#three");
-      const loader = new FBXLoader();
+      // const loader = new FBXLoader();
+      const loader = new GLTFLoader();
       
       const renderer = new WebGLRenderer({
         canvas,
@@ -201,8 +203,10 @@ export default {
       // camera.rotation.set(0, 0, 0)
       camera.up.set(0, 1.5, 0);
       // scene.add(axes);
-      loader.load("/model/box.fbx", (object) => {
-        object.scale.set(0.03, 0.03, 0.03);
+      loader.load("/model/m.gltf", (gltf) => {
+        let object = gltf.scene;
+
+        object.scale.set(30, 30, 30);
         object.position.set(0, 0, 0);
         object.rotation.set(0, 0, 0);
         scene.add(object);
@@ -223,7 +227,7 @@ export default {
           this.GetBoneTransform(1).position
         );
         // console.log(init_forward);
-        init_inv[0] = LookRotation(init_forward, new Vector3(0, 1, 0)).invert();
+        init_inv[0] = this.LookRotation(init_forward, new Vector3(0, 1, 0)).invert();
         // init_position = new THREE.Vector3();
         // scene.updateMatrixWorld(true);
         // this.GetBoneTransform(0).getWorldPosition(init_position);
@@ -231,6 +235,23 @@ export default {
         this.GetBoneTransform(0).position.set(0, 0, 0);
         // Test Update
         
+        for (let i = 0; i < 17; i++) {
+          init_rot[i] = new Quaternion();
+          if (this.GetBoneTransform(i)) {
+            this.GetBoneTransform(i).getWorldQuaternion(init_rot[i]);
+            // init_rot[i].invert();
+          }
+        }
+        object.traverse((child) => {
+          if (child.isBone) {
+            let pos = new Vector3();
+            let rot = new Quaternion();
+            child.getWorldPosition(pos);
+            child.getWorldQuaternion(rot);
+            console.log(child.name, pos, rot);
+            console.log(child);
+          }
+        });
         // let init_pos = new Vector3();
         // let init_rev = new Quaternion()
         // this.GetBoneTransform(11).getWorldPosition(init_pos);
@@ -240,57 +261,7 @@ export default {
         // console.log(object)
       });
 
-      let LookRotation = (forward, up) => {
-        const vector = forward.clone().normalize();
-        const vector2 = new Vector3().crossVectors(up, vector).normalize();
-        const vector3 = new Vector3().crossVectors(vector, vector2).normalize();
-        const m00 = vector2.x;
-        const m01 = vector2.y;
-        const m02 = vector2.z;
-        const m10 = vector3.x;
-        const m11 = vector3.y;
-        const m12 = vector3.z;
-        const m20 = vector.x;
-        const m21 = vector.y;
-        const m22 = vector.z;
-
-        const num8 = m00 + m11 + m22;
-        const quaternion = new Quaternion();
-        if (num8 > 0) {
-          let num = Math.sqrt(num8 + 1);
-          quaternion.w = num * 0.5;
-          num = 0.5 / num;
-          quaternion.x = (m12 - m21) * num;
-          quaternion.y = (m20 - m02) * num;
-          quaternion.z = (m01 - m10) * num;
-          return quaternion;
-        }
-        if (m00 >= m11 && m00 >= m22) {
-          const num7 = Math.sqrt(1 + m00 - m11 - m22);
-          const num4 = 0.5 / num7;
-          quaternion.x = 0.5 * num7;
-          quaternion.y = (m01 + m10) * num4;
-          quaternion.z = (m02 + m20) * num4;
-          quaternion.w = (m12 - m21) * num4;
-          return quaternion;
-        }
-        if (m11 > m22) {
-          const num6 = Math.sqrt(1 + m11 - m00 - m22);
-          const num3 = 0.5 / num6;
-          quaternion.x = (m10 + m01) * num3;
-          quaternion.y = 0.5 * num6;
-          quaternion.z = (m21 + m12) * num3;
-          quaternion.w = (m20 - m02) * num3;
-          return quaternion;
-        }
-        const num5 = Math.sqrt(1 + m22 - m00 - m11);
-        const num2 = 0.5 / num5;
-        quaternion.x = (m20 + m02) * num2;
-        quaternion.y = (m21 + m12) * num2;
-        quaternion.z = 0.5 * num5;
-        quaternion.w = (m01 - m10) * num2;
-        return quaternion;
-      };
+      
 
       /*
         bone_t[0] = anim.GetBoneTransform(HumanBodyBones.Hips);
@@ -357,6 +328,57 @@ export default {
       }
       animate();
     },
+    LookRotation(forward, up) {
+        const vector = forward.clone().normalize();
+        const vector2 = new Vector3().crossVectors(up, vector).normalize();
+        const vector3 = new Vector3().crossVectors(vector, vector2).normalize();
+        const m00 = vector2.x;
+        const m01 = vector2.y;
+        const m02 = vector2.z;
+        const m10 = vector3.x;
+        const m11 = vector3.y;
+        const m12 = vector3.z;
+        const m20 = vector.x;
+        const m21 = vector.y;
+        const m22 = vector.z;
+
+        const num8 = m00 + m11 + m22;
+        const quaternion = new Quaternion();
+        if (num8 > 0) {
+          let num = Math.sqrt(num8 + 1);
+          quaternion.w = num * 0.5;
+          num = 0.5 / num;
+          quaternion.x = (m12 - m21) * num;
+          quaternion.y = (m20 - m02) * num;
+          quaternion.z = (m01 - m10) * num;
+          return quaternion;
+        }
+        if (m00 >= m11 && m00 >= m22) {
+          const num7 = Math.sqrt(1 + m00 - m11 - m22);
+          const num4 = 0.5 / num7;
+          quaternion.x = 0.5 * num7;
+          quaternion.y = (m01 + m10) * num4;
+          quaternion.z = (m02 + m20) * num4;
+          quaternion.w = (m12 - m21) * num4;
+          return quaternion;
+        }
+        if (m11 > m22) {
+          const num6 = Math.sqrt(1 + m11 - m00 - m22);
+          const num3 = 0.5 / num6;
+          quaternion.x = (m10 + m01) * num3;
+          quaternion.y = 0.5 * num6;
+          quaternion.z = (m21 + m12) * num3;
+          quaternion.w = (m20 - m02) * num3;
+          return quaternion;
+        }
+        const num5 = Math.sqrt(1 + m22 - m00 - m11);
+        const num2 = 0.5 / num5;
+        quaternion.x = (m20 + m02) * num2;
+        quaternion.y = (m21 + m12) * num2;
+        quaternion.z = 0.5 * num5;
+        quaternion.w = (m01 - m10) * num2;
+        return quaternion;
+      },
     TriangleNormal(a, b, c) {
       // console.log(a, b, c);
       let d1 = new Vector3().subVectors(a, b);
@@ -439,37 +461,50 @@ export default {
 
       // GetBoneTransform(0).position.set(init_position.x + now_pos[0].x * scale_ratio, init_position.y + now_pos[0].y * scale_ratio, init_position.z + now_pos[0].z * scale_ratio);
       // scene.updateMatrixWorld(true);
-
-      for (let i = 0; i < bones.length; i++) {
+      for (let i = 6; i < 7; i++) {
+      // for (let i = 0; i < bones.length; i++) {
         const b = bones[i];
         const c = child_bones[i];
         let now_vec = now_pos[c].clone().sub(now_pos[b]).normalize();
         let vecB = new Vector3();
         let vecC = new Vector3();
         scene.updateMatrixWorld(true);
+      
         this.GetBoneTransform(b).getWorldPosition(vecB);
         this.GetBoneTransform(c).getWorldPosition(vecC);
         let init_vec = vecC.clone().sub(vecB).normalize();
 
+        
+
         // if (bones.length - i <= 2) {
         //   console.log(b, c)
         // }
+        init_vec.applyQuaternion(init_rot[b])
+        console.log(init_vec, now_vec);
         let rotation = new Quaternion().setFromUnitVectors(
           // this.GetBoneTransform(b).position.clone().sub(this.GetBoneTransform(c).position).normalize(),
           init_vec,
           now_vec
         );
+        console.log(rotation);
+        
+        // let ret_vec = new Vector3().crossVectors(new Vector3(0, 1, 0), now_vec).add(vecB)
 
-        // console.log(rotation);
-
+        // this.GetBoneTransform(b).lookAt(ret_vec);
+        // this.GetBoneTransform(b).applyQuaternion(this.LookRotation(now_vec, new Vector3(0, 1, 0)));
         this.GetBoneTransform(b).applyQuaternion(rotation);
+        // console.log(this.GetBoneTransform(b));
+        this.GetBoneTransform(b).getWorldPosition(vecB);
+        this.GetBoneTransform(c).getWorldPosition(vecC);
+        init_vec = vecC.clone().sub(vecB).normalize();
+        console.log(init_vec);
       }
       scene.updateMatrixWorld(true);
-      this.GetBoneTransform(0).position.set(
-        now_pos[0].x * scale_ratio,
-        now_pos[0].y * scale_ratio,
-        now_pos[0].z * scale_ratio
-      );
+      // this.GetBoneTransform(0).position.set(
+      //   now_pos[0].x * scale_ratio,
+      //   now_pos[0].y * scale_ratio,
+      //   now_pos[0].z * scale_ratio
+      // );
     },
   },
 };
