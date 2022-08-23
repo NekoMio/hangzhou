@@ -14,7 +14,7 @@
         <div
           class="m-0 text-xs not-italic font-serif font-normal leading-4 text-white"
         >
-          亚运会体育图标动作模仿游戏 
+          亚运会体育图标动作模仿游戏
         </div>
         <img class="mt-2 w-28 h-28" src="./assets/img/logo.svg" alt="logo" />
       </div>
@@ -25,7 +25,6 @@
         <div
           v-if="!started"
           class="w-32 ml-3 mt-10 text-xl leading-6 font-normal font-serif text-white animate-pulse"
-          
         >
           模仿这个动作开始游戏吧！
         </div>
@@ -112,11 +111,13 @@ import {
 } from "three";
 import { inject } from "vue";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+// import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 let bones = [1, 2, 4, 5, 7, 8, 11, 12, 14, 15]; // 親ボーン
 let child_bones = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16];
 let init_inv = new Array();
-let init_vec = new Array();
+// let init_vec = new Array();
+let init_rot = new Array();
 let scale_ratio = 0.003;
 let heal_position = 0.0;
 let init_position;
@@ -145,14 +146,14 @@ export default {
       console.log("disconnect");
     });
     this.$socket.on("message", (data) => {
-      data = data[0]
+      data = data[0];
       console.log(data);
       // data = JSON.parse(data);
-      
+
       if (data.started == true) {
         if (this.started == false) {
           this.currentTime = 0;
-        } 
+        }
       }
       if (data.started == false) {
         if (this.started == true) {
@@ -180,8 +181,9 @@ export default {
       scene = new Scene();
       // scene.background = new THREE.Color("0x00000000");
       const canvas = document.querySelector("#three");
-      const loader = new FBXLoader();
-      
+      // const loader = new FBXLoader();
+      const loader = new GLTFLoader();
+
       const renderer = new WebGLRenderer({
         canvas,
         antialias: true,
@@ -201,19 +203,29 @@ export default {
       // camera.rotation.set(0, 0, 0)
       camera.up.set(0, 1.5, 0);
       // scene.add(axes);
-      loader.load("/model/box.fbx", (object) => {
-        object.scale.set(0.03, 0.03, 0.03);
+      // loader.load("/model/try.glb", 
+        // function (gltf) {
+
+        //   scene.add(gltf.scene);
+        
+        // }
+      // )
+      loader.load("/model/m.gltf", (gltf) => {
+        let object = gltf.scene;
+
+        object.scale.set(30, 30, 30);
         object.position.set(0, 0, 0);
         object.rotation.set(0, 0, 0);
         scene.add(object);
-        object.traverse((child) => {
-          if (child.isMesh) {
-            child.castShadow = true;
-            child.receiveShadow = true;
-          }
-        });
+        
+        // object.traverse((child) => {
+        //   if (child.isMesh) {
+        //     child.castShadow = true;
+        //     child.receiveShadow = true;
+        //   }
+        // });
         // let root = scene.getObjectByProperty("type", "Bone");
-        console.log(object);
+        // console.log(object);
         const helper = new SkeletonHelper(object);
         helper.material.linewidth = 2;
         scene.add(helper);
@@ -223,74 +235,42 @@ export default {
           this.GetBoneTransform(1).position
         );
         // console.log(init_forward);
-        init_inv[0] = LookRotation(init_forward, new Vector3(0, 1, 0)).invert();
-        // init_position = new THREE.Vector3();
+        init_inv[0] = this.LookRotation(init_forward, new Vector3(0, 1, 0)).invert();
+        init_position = new Vector3(0, 0, 0);
+        this.GetBoneTransform(0).position.set(0, 0, 0);
         // scene.updateMatrixWorld(true);
         // this.GetBoneTransform(0).getWorldPosition(init_position);
+        init_rot[0] = new Quaternion();
+        this.GetBoneTransform(0).getWorldQuaternion(init_rot[0]);
+        scene.updateMatrixWorld(true);
+        // init_rot[0] = this.GetBoneTransform(0).quaternion;
         // init_position = this.GetBoneTransform(0).position.clone();
-        this.GetBoneTransform(0).position.set(0, 0, 0);
+        for (let i = 0; i < bones.length; i++) {
+          let b = bones[i];
+          let c = child_bones[i];
+          let b_position = new Vector3();
+          let c_position = new Vector3();
+          this.GetBoneTransform(b).getWorldPosition(b_position);
+          this.GetBoneTransform(c).getWorldPosition(c_position);
+          // console.log(this.GetBoneTransform(b));
+          init_rot[b] = new Quaternion();
+          this.GetBoneTransform(b).getWorldQuaternion(init_rot[b]);
+          init_inv[b] = this.LookRotation(
+            b_position.sub(c_position),
+            init_forward
+          ).invert();
+        }
+       
         // Test Update
+
+        let init_pos = new Vector3();
+        let init_rev = new Quaternion()
+        this.GetBoneTransform(11).getWorldPosition(init_pos);
         
-        // let init_pos = new Vector3();
-        // let init_rev = new Quaternion()
-        // this.GetBoneTransform(11).getWorldPosition(init_pos);
-        // ;
-        // console.log(init_pos, this.GetBoneTransform(11).quaternion);
+        console.log(init_pos, this.GetBoneTransform(11).quaternion);
 
         // console.log(object)
       });
-
-      let LookRotation = (forward, up) => {
-        const vector = forward.clone().normalize();
-        const vector2 = new Vector3().crossVectors(up, vector).normalize();
-        const vector3 = new Vector3().crossVectors(vector, vector2).normalize();
-        const m00 = vector2.x;
-        const m01 = vector2.y;
-        const m02 = vector2.z;
-        const m10 = vector3.x;
-        const m11 = vector3.y;
-        const m12 = vector3.z;
-        const m20 = vector.x;
-        const m21 = vector.y;
-        const m22 = vector.z;
-
-        const num8 = m00 + m11 + m22;
-        const quaternion = new Quaternion();
-        if (num8 > 0) {
-          let num = Math.sqrt(num8 + 1);
-          quaternion.w = num * 0.5;
-          num = 0.5 / num;
-          quaternion.x = (m12 - m21) * num;
-          quaternion.y = (m20 - m02) * num;
-          quaternion.z = (m01 - m10) * num;
-          return quaternion;
-        }
-        if (m00 >= m11 && m00 >= m22) {
-          const num7 = Math.sqrt(1 + m00 - m11 - m22);
-          const num4 = 0.5 / num7;
-          quaternion.x = 0.5 * num7;
-          quaternion.y = (m01 + m10) * num4;
-          quaternion.z = (m02 + m20) * num4;
-          quaternion.w = (m12 - m21) * num4;
-          return quaternion;
-        }
-        if (m11 > m22) {
-          const num6 = Math.sqrt(1 + m11 - m00 - m22);
-          const num3 = 0.5 / num6;
-          quaternion.x = (m10 + m01) * num3;
-          quaternion.y = 0.5 * num6;
-          quaternion.z = (m21 + m12) * num3;
-          quaternion.w = (m20 - m02) * num3;
-          return quaternion;
-        }
-        const num5 = Math.sqrt(1 + m22 - m00 - m11);
-        const num2 = 0.5 / num5;
-        quaternion.x = (m20 + m02) * num2;
-        quaternion.y = (m21 + m12) * num2;
-        quaternion.z = 0.5 * num5;
-        quaternion.w = (m01 - m10) * num2;
-        return quaternion;
-      };
 
       /*
         bone_t[0] = anim.GetBoneTransform(HumanBodyBones.Hips);
@@ -357,6 +337,57 @@ export default {
       }
       animate();
     },
+    LookRotation(forward, up) {
+      const vector = forward.clone().normalize();
+      const vector2 = new Vector3().crossVectors(up, vector).normalize();
+      const vector3 = new Vector3().crossVectors(vector, vector2).normalize();
+      const m00 = vector2.x;
+      const m01 = vector2.y;
+      const m02 = vector2.z;
+      const m10 = vector3.x;
+      const m11 = vector3.y;
+      const m12 = vector3.z;
+      const m20 = vector.x;
+      const m21 = vector.y;
+      const m22 = vector.z;
+
+      const num8 = m00 + m11 + m22;
+      const quaternion = new Quaternion();
+      if (num8 > 0) {
+        let num = Math.sqrt(num8 + 1);
+        quaternion.w = num * 0.5;
+        num = 0.5 / num;
+        quaternion.x = (m12 - m21) * num;
+        quaternion.y = (m20 - m02) * num;
+        quaternion.z = (m01 - m10) * num;
+        return quaternion;
+      }
+      if (m00 >= m11 && m00 >= m22) {
+        const num7 = Math.sqrt(1 + m00 - m11 - m22);
+        const num4 = 0.5 / num7;
+        quaternion.x = 0.5 * num7;
+        quaternion.y = (m01 + m10) * num4;
+        quaternion.z = (m02 + m20) * num4;
+        quaternion.w = (m12 - m21) * num4;
+        return quaternion;
+      }
+      if (m11 > m22) {
+        const num6 = Math.sqrt(1 + m11 - m00 - m22);
+        const num3 = 0.5 / num6;
+        quaternion.x = (m10 + m01) * num3;
+        quaternion.y = 0.5 * num6;
+        quaternion.z = (m21 + m12) * num3;
+        quaternion.w = (m20 - m02) * num3;
+        return quaternion;
+      }
+      const num5 = Math.sqrt(1 + m22 - m00 - m11);
+      const num2 = 0.5 / num5;
+      quaternion.x = (m20 + m02) * num2;
+      quaternion.y = (m21 + m12) * num2;
+      quaternion.z = 0.5 * num5;
+      quaternion.w = (m01 - m10) * num2;
+      return quaternion;
+    },
     TriangleNormal(a, b, c) {
       // console.log(a, b, c);
       let d1 = new Vector3().subVectors(a, b);
@@ -371,7 +402,9 @@ export default {
     },
     GetBoneTransform(boneId) {
       // return scene.getObjectByName("Character1_" + GetBoneTransform_text(boneId))
-      return scene.getObjectByName("mixamorig" + this.GetBoneTransform_text(boneId));
+      return scene.getObjectByName(
+        "mixamorig" + this.GetBoneTransform_text(boneId)
+      );
     },
     GetBoneTransform_text(boneId) {
       switch (boneId) {
@@ -436,40 +469,47 @@ export default {
       // console.log(pos_forward);
 
       // console.log(init_position)
-
-      // GetBoneTransform(0).position.set(init_position.x + now_pos[0].x * scale_ratio, init_position.y + now_pos[0].y * scale_ratio, init_position.z + now_pos[0].z * scale_ratio);
+      // console.log(scene.getObjectByName("mixamorigHips"));
+      // this.GetBoneTransform(0).position.set(
+      //   init_position.x + now_pos[0].x * scale_ratio,
+      //   init_position.y + now_pos[0].y * scale_ratio,
+      //   init_position.z + now_pos[0].z * scale_ratio
+      // );
+      this.GetBoneTransform(0).applyQuaternion(
+        this.LookRotation(pos_forward, new Vector3(0, 1, 0)).multiply(init_rot[0])
+      );
       // scene.updateMatrixWorld(true);
 
       for (let i = 0; i < bones.length; i++) {
         const b = bones[i];
         const c = child_bones[i];
-        let now_vec = now_pos[c].clone().sub(now_pos[b]).normalize();
-        let vecB = new Vector3();
-        let vecC = new Vector3();
-        scene.updateMatrixWorld(true);
-        this.GetBoneTransform(b).getWorldPosition(vecB);
-        this.GetBoneTransform(c).getWorldPosition(vecC);
-        let init_vec = vecC.clone().sub(vecB).normalize();
 
+        scene.updateMatrixWorld(true);
+
+        let vec = new Vector3().subVectors(now_pos[b], now_pos[c]);
         // if (bones.length - i <= 2) {
         //   console.log(b, c)
         // }
-        let rotation = new Quaternion().setFromUnitVectors(
-          // this.GetBoneTransform(b).position.clone().sub(this.GetBoneTransform(c).position).normalize(),
-          init_vec,
-          now_vec
-        );
+        // let rotation = new Quaternion().setFromUnitVectors(
+        //   // this.GetBoneTransform(b).position.clone().sub(this.GetBoneTransform(c).position).normalize(),
+        //   init_vec,
+        //   now_vec
+        // );
 
         // console.log(rotation);
 
-        this.GetBoneTransform(b).applyQuaternion(rotation);
+        this.GetBoneTransform(b).applyQuaternion(
+          this.LookRotation(vec, pos_forward)
+            .multiply(init_inv[b])
+            .multiply(init_rot[b])
+        );
       }
       scene.updateMatrixWorld(true);
-      this.GetBoneTransform(0).position.set(
-        now_pos[0].x * scale_ratio,
-        now_pos[0].y * scale_ratio,
-        now_pos[0].z * scale_ratio
-      );
+      // this.GetBoneTransform(0).position.set(
+      //   now_pos[0].x * scale_ratio,
+      //   now_pos[0].y * scale_ratio,
+      //   now_pos[0].z * scale_ratio
+      // );
     },
   },
 };
