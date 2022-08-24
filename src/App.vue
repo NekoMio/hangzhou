@@ -236,10 +236,8 @@ export default {
         // Test Update
         
         for (let i = 0; i < 17; i++) {
-          init_rot[i] = new Quaternion();
           if (this.GetBoneTransform(i)) {
-            this.GetBoneTransform(i).getWorldQuaternion(init_rot[i]);
-            // init_rot[i].invert();
+            init_rot[i] = this.GetBoneTransform(i).rotation.clone();
           }
         }
         object.traverse((child) => {
@@ -452,7 +450,7 @@ export default {
       console.log(data);
       let now_pos = [];
       for (let i = 0; i < data.length; i++) {
-        now_pos[i] = new Vector3(data[i][0], data[i][1], data[i][2]);
+        now_pos[i] = new Vector3(-data[i][0], data[i][1], -data[i][2]);
       }
       let pos_forward = this.TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
       // console.log(pos_forward);
@@ -461,8 +459,8 @@ export default {
 
       // GetBoneTransform(0).position.set(init_position.x + now_pos[0].x * scale_ratio, init_position.y + now_pos[0].y * scale_ratio, init_position.z + now_pos[0].z * scale_ratio);
       // scene.updateMatrixWorld(true);
-      for (let i = 6; i < 7; i++) {
-      // for (let i = 0; i < bones.length; i++) {
+      // for (let i = 6; i < 7; i++) {
+      for (let i = 0; i < bones.length; i++) {
         const b = bones[i];
         const c = child_bones[i];
         let now_vec = now_pos[c].clone().sub(now_pos[b]).normalize();
@@ -472,20 +470,37 @@ export default {
       
         this.GetBoneTransform(b).getWorldPosition(vecB);
         this.GetBoneTransform(c).getWorldPosition(vecC);
+
+        vecB = this.GetBoneTransform(b).worldToLocal(vecB);
+        vecC = this.GetBoneTransform(b).worldToLocal(vecC);
+
+        let new_now_posB = this.GetBoneTransform(b).worldToLocal(now_pos[b].clone());
+        let new_now_posC = this.GetBoneTransform(b).worldToLocal(now_pos[c].clone());
+
+        let new_now_vec = new_now_posC.clone().sub(new_now_posB).normalize();
+
         let init_vec = vecC.clone().sub(vecB).normalize();
 
+
+        // this.GetBoneTransform(b).getWorldQuaternion(init_rot[b]);
+        // init_rot[b].invert();
         
 
         // if (bones.length - i <= 2) {
         //   console.log(b, c)
         // }
-        // init_vec.applyQuaternion(init_rot[b])
-        // now_vec.applyQuaternion(init_rot[b])
-        console.log(init_vec, now_vec);
+        console.log("------------------------")
+        console.log(init_vec, new_now_vec, now_vec);
+
+        // let tmp = new Vector3()
+        // console.log(this.GetBoneTransform(b).getWorldDirection(tmp));
+        // init_vec = this.GetBoneTransform(b).localToWorld(init_vec);
+        // now_vec = this.GetBoneTransform(b).localToWorld(now_vec);
+        // console.log(init_vec, now_vec);
         let rotation = new Quaternion().setFromUnitVectors(
           // this.GetBoneTransform(b).position.clone().sub(this.GetBoneTransform(c).position).normalize(),
           init_vec,
-          now_vec
+          new_now_vec
         );
         console.log(rotation);
         
