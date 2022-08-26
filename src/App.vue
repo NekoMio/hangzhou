@@ -458,7 +458,7 @@ export default {
       // console.log(init_position)
 
       // GetBoneTransform(0).position.set(init_position.x + now_pos[0].x * scale_ratio, init_position.y + now_pos[0].y * scale_ratio, init_position.z + now_pos[0].z * scale_ratio);
-      // scene.updateMatrixWorld(true);
+      scene.updateMatrixWorld(true);
       // for (let i = 6; i < 7; i++) {
       for (let i = 0; i < bones.length; i++) {
         const b = bones[i];
@@ -470,16 +470,27 @@ export default {
       
         this.GetBoneTransform(b).getWorldPosition(vecB);
         this.GetBoneTransform(c).getWorldPosition(vecC);
+        console.log("------------------------")
+        console.log(vecC.clone().sub(vecB).normalize())
 
-        vecB = this.GetBoneTransform(b).worldToLocal(vecB);
-        vecC = this.GetBoneTransform(b).worldToLocal(vecC);
+        let new_vecC = vecC.clone().sub(vecB).normalize().add(vecB);
+        
+        let new_now_posC = now_vec.clone().add(vecB);
+        // console.log(vecB, new_vecC, new_now_posC);
+        let matrixWorld = this.GetBoneTransform(b).matrixWorld.clone()
+        this.GetBoneTransform(b).worldToLocal(vecB);
+        this.GetBoneTransform(b).worldToLocal(new_vecC);
+        this.GetBoneTransform(b).worldToLocal(new_now_posC);
+        // console.log(vecB, new_vecC);
 
-        let new_now_posB = this.GetBoneTransform(b).worldToLocal(now_pos[b].clone());
-        let new_now_posC = this.GetBoneTransform(b).worldToLocal(now_pos[c].clone());
+        let init_vec = new_vecC.clone().sub(vecB).normalize();
 
-        let new_now_vec = new_now_posC.clone().sub(new_now_posB).normalize();
-
-        let init_vec = vecC.clone().sub(vecB).normalize();
+        // let new_now_posB = this.GetBoneTransform(b).worldToLocal(now_pos[b].clone());
+        // let new_now_posC = this.GetBoneTransform(b).worldToLocal(now_pos[c].clone());
+      
+        // console.log(new_now_posC, vecC);
+        let new_now_vec = new_now_posC.clone().sub(vecB).normalize();
+        
 
 
         // this.GetBoneTransform(b).getWorldQuaternion(init_rot[b]);
@@ -489,8 +500,10 @@ export default {
         // if (bones.length - i <= 2) {
         //   console.log(b, c)
         // }
-        console.log("------------------------")
+        
         console.log(init_vec, new_now_vec, now_vec);
+
+        // console.log(init_vec.clone().dot(new_now_vec));
 
         // let tmp = new Vector3()
         // console.log(this.GetBoneTransform(b).getWorldDirection(tmp));
@@ -501,19 +514,27 @@ export default {
           // this.GetBoneTransform(b).position.clone().sub(this.GetBoneTransform(c).position).normalize(),
           init_vec,
           new_now_vec
-        );
+        ).invert()
         console.log(rotation);
         
         // let ret_vec = new Vector3().crossVectors(new Vector3(0, 1, 0), now_vec).add(vecB)
 
         // this.GetBoneTransform(b).lookAt(ret_vec);
         // this.GetBoneTransform(b).applyQuaternion(this.LookRotation(now_vec, new Vector3(0, 1, 0)));
+        // console.log(this.GetBoneTransform(b).quaternion)
         this.GetBoneTransform(b).applyQuaternion(rotation);
+        // console.log(this.GetBoneTransform(b).quaternion)
+        
         // console.log(this.GetBoneTransform(b));
         this.GetBoneTransform(b).getWorldPosition(vecB);
         this.GetBoneTransform(c).getWorldPosition(vecC);
         init_vec = vecC.clone().sub(vecB).normalize();
-        console.log(init_vec);
+
+        vecB.applyMatrix4(matrixWorld)
+        vecC.applyMatrix4(matrixWorld)
+
+        let debug_vec = vecC.clone().sub(vecB).normalize();
+        console.log(init_vec, debug_vec);
       }
       scene.updateMatrixWorld(true);
       // this.GetBoneTransform(0).position.set(
