@@ -21,7 +21,47 @@
           class="xl:w-1/3 w-2/3 h-1/2 rounded-lg shadow-2xl shadow-slate-800"
           style="background-color: rgba(16, 15, 70, 0.5)"
         >
-          结果
+          <div class="w-full h-1/5 pl-8 pt-8">
+            <p class="text-4xl font-normal text-white">游戏结束！</p>
+            <p class="text-xl font-normal text-white">End of game!</p>
+          </div>
+          <div class="mx-8 my-4 bg-white h-0.5"></div>
+          <div class="w-full h-1/6 px-8 pt-2">
+            <p class="text-xl font-normal text-white">
+              您的用时为: {{ totalTime }} 秒
+            </p>
+            <p class="text-xl font-normal text-white">
+              Your time is: {{ totalTime }} seconds
+            </p>
+          </div>
+          <div>
+            <p class="text-xl font-normal text-white text-center">用时排行</p>
+          </div>
+          <div class="mx-8 my-4 bg-white h-0.5"></div>
+          <div class="flex items-center justify-center">
+            <table class="table-auto mx-8 w-3/4">
+              <thead class="mx-8">
+                <tr class="text-white">
+                  <th class="px-4 py-2 w-1/3">排名</th>
+                  <th class="px-4 py-2 w-1/3">时间</th>
+                </tr>
+              </thead>
+              <tbody class="mx-8">
+                <tr
+                  v-for="(item, index) in rankList"
+                  :key="index"
+                  class="text-white"
+                >
+                  <td class="border-y px-4 py-1 w-1/3 text-center">
+                    {{ index + 1 }}
+                  </td>
+                  <td class="border-y border-l px-4 p-1 w-1/3 text-center">
+                    {{ item }}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
     </Transition>
@@ -88,7 +128,7 @@
           <img
             v-else
             class="w-52 mx-auto mt-3 mb-5"
-            :src="posePic"
+            :src="poseGif"
             alt="动态图"
           />
         </div>
@@ -181,8 +221,8 @@ let englishToChinese = {
 };
 let init_inv = [];
 let init_rot = [];
+let init_fwd = [];
 let scale_ratio = 0.003;
-let heal_position = 0.0;
 let init_position;
 let scene = null;
 
@@ -192,6 +232,7 @@ export default {
       poseNameCN: "跆拳道",
       poseNameEN: "Taekwondo",
       posePic: "/pic/cut/pose-09-crop.png",
+      poseGif: "/pic/cut/pose-09.gif",
       percentage: 10,
       started: false,
       currentTime: 14,
@@ -199,7 +240,7 @@ export default {
       colorArray: [],
       nowColor: "rgb(1,3,4)",
       showEnd: false,
-      rankList: [],
+      rankList: [1, 2, 3, 4, 5],
       totalTime: 0,
       // socket = inject("socket"),
     };
@@ -254,10 +295,14 @@ export default {
       this.updatePos(data["3dpose"]);
     });
     setInterval(() => {
-      this.currentTime++;
-      if (this.currentTime > 20) {
-        this.started = true;
+      if (this.started === true) {
+        this.currentTime += 1;
+        this.totalTime += 1;
       }
+      // if (this.currentTime > 20) {
+      //   // this.started = ;
+      //   // this.showEnd = true;
+      // }
     }, 1000);
   },
   methods: {
@@ -367,43 +412,9 @@ export default {
             init_rot[i] = this.GetBoneTransform(i).rotation.clone();
           }
         }
-        // object.traverse((child) => {
-        //   if (child.isBone) {
-        //     let pos = new Vector3();
-        //     let rot = new Quaternion();
-        //     child.getWorldPosition(pos);
-        //     child.getWorldQuaternion(rot);
-        //     console.log(child.name, pos, rot);
-        //     console.log(child);
-        //   }
-        // });
-        // let init_pos = new Vector3();
-        // let init_rev = new Quaternion()
-        // this.GetBoneTransform(11).getWorldPosition(init_pos);
-        // ;
-        // console.log(init_pos, this.GetBoneTransform(11).quaternion);
 
-        // console.log(object)
       });
 
-      /*
-        bone_t[0] = anim.GetBoneTransform(HumanBodyBones.Hips);
-        bone_t[1] = anim.GetBoneTransform(HumanBodyBones.RightUpperLeg);
-        bone_t[2] = anim.GetBoneTransform(HumanBodyBones.RightLowerLeg);
-        bone_t[3] = anim.GetBoneTransform(HumanBodyBones.RightFoot);
-        bone_t[4] = anim.GetBoneTransform(HumanBodyBones.LeftUpperLeg);
-        bone_t[5] = anim.GetBoneTransform(HumanBodyBones.LeftLowerLeg);
-        bone_t[6] = anim.GetBoneTransform(HumanBodyBones.LeftFoot);
-        bone_t[7] = anim.GetBoneTransform(HumanBodyBones.Spine);
-        bone_t[8] = anim.GetBoneTransform(HumanBodyBones.Neck);
-        bone_t[10] = anim.GetBoneTransform(HumanBodyBones.Head);
-        bone_t[11] = anim.GetBoneTransform(HumanBodyBones.LeftUpperArm);
-        bone_t[12] = anim.GetBoneTransform(HumanBodyBones.LeftLowerArm);
-        bone_t[13] = anim.GetBoneTransform(HumanBodyBones.LeftHand);
-        bone_t[14] = anim.GetBoneTransform(HumanBodyBones.RightUpperArm);
-        bone_t[15] = anim.GetBoneTransform(HumanBodyBones.RightLowerArm);
-        bone_t[16] = anim.GetBoneTransform(HumanBodyBones.RightHand);
-      */
       let floorGeometry = new CircleGeometry(1, 128);
       let floorMaterial = new MeshMatcapMaterial({ color: 0xffffff });
       let floor = new Mesh(floorGeometry, floorMaterial);
