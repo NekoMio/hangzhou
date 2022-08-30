@@ -184,7 +184,7 @@ import {
   MeshMatcapMaterial,
 } from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-// import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
+import { FBXLoader } from "three/examples/jsm/loaders/FBXLoader";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 let bones = [1, 2, 4, 5, 7, 8, 11, 12, 14, 15]; // 親ボーン
 let child_bones = [2, 3, 5, 6, 8, 10, 12, 13, 15, 16];
@@ -221,7 +221,6 @@ let englishToChinese = {
 };
 let init_inv = [];
 let init_rot = [];
-let init_fwd = [];
 let scale_ratio = 0.003;
 let init_position;
 let scene = null;
@@ -247,6 +246,7 @@ export default {
   },
   mounted() {
     this.initThree();
+
     this.colorArray = this.colorArrToString(
       this.colorGradient4(
         [255, 50, 50],
@@ -351,8 +351,8 @@ export default {
       scene = new Scene();
       // scene.background = new THREE.Color("0x00000000");
       const canvas = document.querySelector("#three");
-      // const loader = new FBXLoader();
-      const loader = new GLTFLoader();
+      const loader = new FBXLoader();
+      // const loader = new GLTFLoader();
 
       const renderer = new WebGLRenderer({
         canvas,
@@ -373,10 +373,12 @@ export default {
       // camera.rotation.set(0, 0, 0)
       camera.up.set(0, 1.5, 0);
       // scene.add(axes);
-      loader.load("/model/m.gltf", (gltf) => {
-        let object = gltf.scene;
+      loader.load("/model/unitychan.fbx", (object) => {
+      // loader.load("/model/m.gltf", (gltf) => {
+      //   let object = gltf.scene;
 
-        object.scale.set(30, 30, 30);
+        // object.scale.set(30, 30, 30);
+        object.scale.set(0.02, 0.02, 0.02);
         object.position.set(0, 0, 0);
         object.rotation.set(0, 0, 0);
         scene.add(object);
@@ -391,28 +393,46 @@ export default {
         const helper = new SkeletonHelper(object);
         helper.material.linewidth = 2;
         scene.add(helper);
-        let init_forward = this.TriangleNormal(
-          this.GetBoneTransform(7).position,
-          this.GetBoneTransform(4).position,
-          this.GetBoneTransform(1).position
-        );
-        // console.log(init_forward);
-        init_inv[0] = this.LookRotation(
-          init_forward,
-          new Vector3(0, 1, 0)
-        ).invert();
+        let pos_7 = new Vector3();
+        let pos_4 = new Vector3();
+        let pos_1 = new Vector3();
+        this.GetBoneTransform(7).getWorldPosition(pos_7);
+        this.GetBoneTransform(4).getWorldPosition(pos_4);
+        this.GetBoneTransform(1).getWorldPosition(pos_1);
+        let init_forward = this.TriangleNormal(pos_7, pos_4, pos_1).normalize();
+        console.log(init_forward);
         init_position = new Vector3();
-        // scene.updateMatrixWorld(true);
-        this.GetBoneTransform(0).getWorldPosition(init_position);
-        this.GetBoneTransform(0).position.set(0, 0, 0);
-        // Test Update
 
+        this.GetBoneTransform(0).position.set(0, 0, 0);
+        this.GetBoneTransform(0).getWorldPosition(init_position);
+        // Test Update
+        // scene.updateMatrixWorld(true);
         for (let i = 0; i < 17; i++) {
           if (this.GetBoneTransform(i)) {
-            init_rot[i] = this.GetBoneTransform(i).rotation.clone();
+            init_rot[i] = new Quaternion().setFromRotationMatrix(
+              this.GetBoneTransform(i).matrixWorld
+            );
           }
         }
+        for (let i = 0; i < bones.length; i++) {
+          let b = bones[i];
+          let cb = child_bones[i];
 
+          let b_pos = new Vector3();
+          let cb_pos = new Vector3();
+          this.GetBoneTransform(b).getWorldPosition(b_pos);
+          this.GetBoneTransform(cb).getWorldPosition(cb_pos);
+          init_inv[b] = this.LookRotation(
+            b_pos.sub(cb_pos).normalize(),
+            init_forward
+          ).invert();
+          console.log(init_rot[b]);
+          console.log(init_inv[b]);
+          // init_inv[b] = new Quaternion().setFromUnitVectors(init_forward, y);
+        }
+        // this.updatePos(
+        //   "17.520359862211492 21.498393851064318 -42.176340380074265 -43.89124856383098 59.15111146258352 -23.905297258430036 -63.93626368490403 2.764834045076873 -218.7684140394839 -24.333191562429285 40.05499037545603 -438.19663341056093 76.01106011155119 -16.15429225286127 -38.17116357886802 61.623875795196206 -74.58036699324838 -253.748550528567 40.802617629187665 -25.806414606224436 -461.38273240882313 20.80750476510115 30.77747806683835 91.94041272911748 -3.7008547232086886 14.98334546022796 249.72462928565363 -28.57944690361432 -28.147954250293942 268.18822914600634 -33.76783930617402 -7.481535000678336 346.2664057660737 70.52920082695036 -19.506839189670806 240.25554389806982 130.0603558599148 -72.24938796744293 126.24172013395527 89.09414865046445 -116.0741528375084 99.87941207427848 -69.96488604702992 60.29500738229508 203.3203990946429 -98.82821874524012 95.78135480758894 58.54642201730239 -129.6987562444719 32.11964411960852 -14.748918102142442"
+        // );
       });
 
       let floorGeometry = new CircleGeometry(1, 128);
@@ -528,10 +548,12 @@ export default {
       return normal;
     },
     GetBoneTransform(boneId) {
-      // return scene.getObjectByName("Character1_" + GetBoneTransform_text(boneId))
       return scene.getObjectByName(
-        "mixamorig" + this.GetBoneTransform_text(boneId)
+        "Character1_" + this.GetBoneTransform_text(boneId)
       );
+      // return scene.getObjectByName(
+      //   "mixamorig" + this.GetBoneTransform_text(boneId)
+      // );
     },
     GetBoneTransform_text(boneId) {
       switch (boneId) {
@@ -587,10 +609,18 @@ export default {
     },
     updatePos(data) {
       // console.log("111");
-      console.log(data);
+      // console.log(data);
       let now_pos = [];
-      for (let i = 0; i < data.length; i++) {
-        now_pos[i] = new Vector3(-data[i][0], data[i][1], -data[i][2]);
+      // for (let i = 0; i < data.length; i++) {
+      //   now_pos[i] = new Vector3(-data[i][0], data[i][1], -data[i][2]);
+      // }
+      data = data.split(" ");
+      for (let i = 0; i < data.length; i += 3) {
+        now_pos[Math.floor(i / 3)] = new Vector3(
+          -parseFloat(data[i]),
+          parseFloat(data[i + 2]),
+          -parseFloat(data[i + 1])
+        );
       }
       let pos_forward = this.TriangleNormal(now_pos[7], now_pos[4], now_pos[1]);
       // console.log(pos_forward);
@@ -611,69 +641,26 @@ export default {
         this.GetBoneTransform(b).getWorldPosition(vecB);
         this.GetBoneTransform(c).getWorldPosition(vecC);
         console.log("------------------------");
-        // console.log(now_vec);
-        // let init_vec = new Vector3().subVectors(vecC, vecB).normalize();
 
-        // console.log(init_vec.clone().dot(new_now_vec));
-        let faMatrix4 = this.GetBoneTransform(b)
-          .matrixWorld.clone()
-          .premultiply(this.GetBoneTransform(b).matrix.clone().invert())
-          .invert();
-
-        // console.log(
-        //   new Euler().setFromRotationMatrix(
-        //     this.GetBoneTransform(b).matrixWorld
-        //   )
-        // );
-        // console.log(
-        //   new Euler().setFromRotationMatrix(this.GetBoneTransform(b).matrix)
-        // );
-        // console.log(new Euler().setFromRotationMatrix(faMatrix4));
-
-        // init_vec.applyMatrix4(faMatrix4).normalize();
-        // now_vec.applyMatrix4(faMatrix4).normalize();
-        // let debug_now_pos_c = now_pos[c].clone();
-        // let debug_now_pos_b = now_pos[b].clone();
-        // let debug_vecC = vecC.clone();
-        // let debug_vecB = vecB.clone();
-
-        // console.log(this.GetBoneTransform(b).matrixWorld);
-        // this.GetBoneTransform(b).worldToLocal(debug_now_pos_c);
-        // this.GetBoneTransform(b).worldToLocal(debug_now_pos_b);
-        // this.GetBoneTransform(b).worldToLocal(debug_vecC);
-        // this.GetBoneTransform(b).worldToLocal(debug_vecB);
-
-        // console.log(
-        //   new Vector3().subVectors(debug_vecC, debug_vecB).normalize()
-        // );
-        // console.log(
-        //   new Vector3().subVectors(debug_now_pos_c, debug_now_pos_b).normalize()
-        // );
-
-        let n_pos_c = now_pos[c].clone().applyMatrix4(faMatrix4);
-        let n_pos_b = now_pos[b].clone().applyMatrix4(faMatrix4);
-        let n_vec_c = vecC.clone().applyMatrix4(faMatrix4);
-        let n_vec_b = vecB.clone().applyMatrix4(faMatrix4);
-
-        let init_vec = new Vector3().subVectors(n_vec_c, n_vec_b).normalize();
-        let now_vec = new Vector3().subVectors(n_pos_c, n_pos_b).normalize();
-
-        // console.log(init_vec, now_vec);
-
-        let rotation = new Quaternion().setFromUnitVectors(
-          // this.GetBoneTransform(b).position.clone().sub(this.GetBoneTransform(c).position).normalize(),
-          init_vec,
-          now_vec
+        let faMatrix = new Quaternion().setFromRotationMatrix(
+          this.GetBoneTransform(b)
+            .matrixWorld.clone()
+            .premultiply(this.GetBoneTransform(c).matrix)
+            .invert()
         );
-        // console.log(rotation);
 
-        this.GetBoneTransform(b).applyQuaternion(rotation);
+        console.log(now_pos[b].clone().sub(now_pos[c]));
+        let rot = this.LookRotation(
+          now_pos[b].clone().sub(now_pos[c]).normalize(),
+          pos_forward
+        )
+          .multiply(init_inv[b])
+          .multiply(init_rot[b])
+          .premultiply(faMatrix)
+          .normalize();
+        console.log(rot);
 
-        this.GetBoneTransform(b).getWorldPosition(vecB);
-        this.GetBoneTransform(c).getWorldPosition(vecC);
-        init_vec = vecC.clone().sub(vecB).normalize();
-
-        console.log(init_vec, now_pos[c].clone().sub(now_pos[b]).normalize());
+        this.GetBoneTransform(b).setRotationFromQuaternion(rot);
       }
       scene.updateMatrixWorld(true);
       // this.GetBoneTransform(0).position.set(
